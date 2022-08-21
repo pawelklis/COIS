@@ -1,0 +1,231 @@
+﻿@inherits LayoutComponentBase
+@inject ProgramInstance cois
+@inject NavigationManager NavManager
+@inject IJSRuntime JSRuntime
+
+<PageTitle>coisWebApp</PageTitle>
+
+<div class="">
+    <div class="">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light" style="z-index: 100000;">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">COIS</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            @*<a class="nav-link active" aria-current="page" href="#">Home</a>*@
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Raport
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="newreport">Edytuj raport</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="readreport">Czytaj raport</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Ewidencje
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="employeeeditor">Pracownicy</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="scanners">Skanery</a></li>
+                                <li><a class="dropdown-item" href="forklifts">Elektrowózki</a></li>
+                                <li><a class="dropdown-item" href="requisites">Rekwizyty</a></li>
+                                <li><a class="dropdown-item" href="bateries">Baterie</a></li>
+                                <li><a class="dropdown-item" href="devicehistory">Historia urządzeń</a></li>
+                                <li><a class="dropdown-item" href="devicestopass">Urządzenia do zdania</a></li>
+                                <li><a class="dropdown-item" href="damages">Rejestr uszkodzeń</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="emptyboxes">Opakowania zbiorcze</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Ustawienia
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="orguniteditor">Jednostki organizacyjne</a></li>
+                                <li><a class="dropdown-item" href="zoneeditor">Strefy</a></li>
+                                <li><a class="dropdown-item" href="workshifteditor">Zmiany pracy</a></li>
+                                <li><a class="dropdown-item" href="infocategoryeditor">Kategorie informacji</a></li>
+                                <li><a class="dropdown-item" href="devicetypes">Kategorie urządzeń</a></li>
+                                <li><a class="dropdown-item" href="deviceconditions">Kondycje urządzeń</a></li>
+                                <li><a class="dropdown-item" href="boxtypes">Rodzaje OZ</a></li>
+                                <li><a class="dropdown-item" href="usereditor">Użytkownicy</a></li>
+                                <li><a class="dropdown-item" href="ReportModeleditor">Raporty</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Harmonogramy
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="importharm">Import harmonogramu</a></li>
+                                <li><a class="dropdown-item" href="crewmodelshedule">Harmonogram</a></li>
+                            </ul>
+                        </li>
+                        @*<li class="nav-item">
+                        <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+                        </li>*@
+                    </ul>
+                    <form class="d-flex">
+                        <a class="nav-link" href="#" tabindex="-1" @onclick="LogOut">Wyloguj</a>
+                    </form>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <main>
+
+        <div class="">
+            @if (cois != null)
+            {
+                @if (cois.UserLoged)
+                {
+                    @Body                  
+                }
+            }
+
+        </div>
+    </main>
+</div>
+
+@if (showLogger)
+{
+    <LoggerCpt></LoggerCpt>
+}
+
+@code
+{
+    bool showLogger;
+    protected override void OnInitialized()
+    {
+        if(cois==null)
+            cois = new ProgramInstance();
+
+        if (cois.UserLoged == false)
+            NavManager.NavigateTo("login");
+
+        if(cois.User!=null && cois.Zone != null)
+        {
+            EmptyBoxOrderType.OnNewOrder += OnNewOrder;
+
+            EmptyBoxAdvert.OnNewAdvert+=OnNewAdvert;
+            EmptyBoxAdvert.OnNewOffert +=OnNewOffert;
+            EmptyBoxAdvert.OnOffertAccept+=OnOffertAccept;
+            EmptyBoxAdvert.OnOffertCancel +=OnOffertCancel;
+        }
+
+        DelegationType.OnDelegationStart += OnDelegationStart;
+        DelegationType.OnDelegationEnd += OnDelegationEnd;
+
+        DeviceEvidence.OnDeviceGet +=OnDeviceGet;
+        DeviceEvidence.OnDevicePass +=OnDevicePass;
+
+
+        cois.Logger.OnStartWork+=LogerStartWork;
+        cois.Logger.OnEndWork +=LogerEndWork;
+        cois.Logger.OnLog +=LogerLog;
+    }
+
+    void OnDeviceGet(object? sender, DeviceEvidence e)
+    {
+      ShowNotification("Pobrano urządzenie!",e.Device().Name,"emptybox.PNG");               
+
+    }
+    void OnDevicePass(object? sender, DeviceEvidence e)
+    {
+        
+      ShowNotification("Zdano urządzenie!",e.Device().Name,"emptybox.PNG");  
+    }
+
+    void LogerStartWork(object sender, LoggerLog e)
+    {
+        showLogger = true;
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+    void LogerEndWork(object sender, LoggerLog e)
+    {
+        showLogger = false;
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+    void LogerLog(object sender, LoggerLog e)
+    {
+        
+    }
+
+    void LogOut(){
+        cois.LogOut();
+        NavManager.NavigateTo("login");
+    }
+    void ShowNotification(string title="",string message="",string footer="", string iconname="")
+    {
+        string msg = DateTime.Now.ToString() + "\n" + message + "\n\n" + footer;
+        JSRuntime.InvokeVoidAsync("Shown",msg,title,iconname);
+    }
+
+    void OnNewOrder(object sender, EmptyBoxOrderType e)
+    {
+        if (e.ParentOrgUnit.Id == cois.OrgUnit.Id)
+        {
+            ShowNotification("Nowe zamówienie OZ!",e.OrderUnit.Name, e.EmptyBox.Name + " " + e.OrderAmount + ".szt.","emptybox.PNG");
+        }
+    }
+    void OnNewAdvert(object sender, EmptyBoxAdvert e)
+    {
+        if (e.OrgUnitId != cois.OrgUnit.Id)
+        {
+            if (cois.OrgUnit.EmptyBoxEnable)
+            {
+                ShowNotification("Nowe ogłoszenie na giełdzie OZ!",e.Orgunit().Name,e.AvertTypeString()+ " " + e.EmptyBox.Name + " " + e.Amount + ".szt.","emptybox.PNG");               
+            }
+        }
+    }
+    void OnNewOffert(object sender, EmptyBoxOffert e)
+    {
+        EmptyBoxAdvert advert = (EmptyBoxAdvert)sender;
+        if (advert.OrgUnitId == cois.OrgUnit.Id && advert.User.Id==cois.User.Id)
+        {
+            ShowNotification("Nowa oferta na giełdzie OZ!",e.Orgunit().Name, "Zaoferowano: " + e.Amount + ".szt.","emptybox.PNG");
+        }
+    }
+    void OnOffertAccept(object sender, EmptyBoxOffert e)
+    {
+        EmptyBoxAdvert advert = (EmptyBoxAdvert)sender;
+        if (e.OrgUnitId == cois.OrgUnit.Id  && e.User.Id==cois.User.Id)
+        {
+            ShowNotification("Zaakceptowano ofertę na giełdzie OZ!",advert.Orgunit().Name, advert.EmptyBox.Name + " " + e.AcceptedAmount + ".szt.","emptybox.PNG");
+        }
+    }
+    void OnOffertCancel(object sender, EmptyBoxOffert e)
+    {
+        EmptyBoxAdvert advert = (EmptyBoxAdvert)sender;
+        if (e.OrgUnitId == cois.OrgUnit.Id && e.User.Id==cois.User.Id)
+        {
+            ShowNotification("Odrzucono ofertę na giełdzie OZ!",advert.Orgunit().Name, advert.EmptyBox.Name + " " + e.AcceptedAmount + ".szt.","emptybox.PNG");
+        }
+    }
+
+    void OnDelegationStart(object sender , DelegationType e)
+    {
+        if (e.ToZone.Id == cois.Zone.Id)
+        {
+            ShowNotification("Delegowanie pracownika", "Oddelegowano pracownika ze strefy " + e.FromZone.Name, e.StartTime.ToShortTimeString() + "-" + e.EndTime.ToShortTimeString(), "user.PNG");
+        }
+    }
+    void OnDelegationEnd(object sender , DelegationType e)
+    {
+        if (e.ToZone.Id == cois.Zone.Id)
+        {
+            ShowNotification("Delegowanie pracownika", "Zakończono oddelegowanie pracownika ze strefy " + e.FromZone.Name, e.StartTime.ToShortTimeString() + "-" + e.EndTime.ToShortTimeString(), "user.PNG");
+        }
+    }
+}

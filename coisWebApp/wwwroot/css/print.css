@@ -1,0 +1,92 @@
+﻿@media print {
+    div {
+        page-break-inside: avoid;
+    }
+
+}
+
+
+body {
+}
+
+
+.header{
+}
+.header1{
+}
+.header2{
+}
+.header3{
+}
+.header4{
+}
+.header5{
+}
+.header6{
+}
+
+.label {
+    font-size: 12px;
+}
+.labelname {
+    font-size: 14px;
+    font-weight:800;
+}
+.labelheader {
+    background-color: gainsboro;
+    width:100%;
+
+}
+.labelsection {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border: 1px solid silver;
+    padding: 5px;
+
+}
+labelbody{
+    width:100%;
+}
+.checkbox {
+    display: block;
+    position: relative;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 18px;
+}
+.checkmarkyes
+{
+    color:green;
+}
+.checkmarkno
+{
+    color:red;
+}
+
+
+
+
+.section{
+    page-break-inside:avoid;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size:small;
+}
+
+th, td {
+    text-align: left;
+    padding: 8px;
+    border: solid 1px silver;
+}
+
+tr:nth-child(even) {
+    background-color: white
+}
+
+th {
+    background-color: gainsboro;
+    color: black;
+}

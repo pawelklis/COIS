@@ -1,0 +1,170 @@
+﻿@page "/emptyboxorder"
+@page "/emptyboxorder/{orderUnitid:int}"
+@inject ProgramInstance cois
+@layout EmptyLayout
+
+
+
+
+<div class="centerOnscreen">
+    @if (showError)
+    {
+        <SurveyPrompt Title="@errortext"></SurveyPrompt>
+    }
+    else
+    {
+        @if (showSuccess)
+        {
+            <SurveyPrompt Title="Wysłano zamówienie"></SurveyPrompt>
+        }
+        else
+        {
+            <div class="card text-center" style="width: 18rem;">
+                <div class="card-header">
+                    <h4>Zamówienie OZ</h4>
+
+                </div>
+                <div class="form-floating mb-3 mt-3">
+                    <h6>@OrderUNIT.Name</h6>
+                </div>
+
+                <div class="form-floating mb-3 mt-3">
+                    <select class="form-control" value="@emptyBox.Id" @onchange="ChangeTyp">
+                        @foreach (var t in boxTypes)
+                        {
+                            <option title="@t.Description" value="@t.Id">@t.Name</option>
+                        }
+                    </select>
+
+                    @code {
+                        void ChangeTyp(ChangeEventArgs e)
+                        {
+                            emptyBox = EmptyBoxType.GetEmptyBoxById(int.Parse(e.Value.ToString()));
+                        }
+                    }
+
+                    <label for="Nazwa">Rodzaj OZ</label>
+                </div>
+                <div class="form-floating mb-3 mt-3">
+                    <input type="number" min="0" max="99999" class="form-control" id="amount" placeholder="Zamawiana ilość" name="amount" @bind="orderAmount">
+                    <label for="amount">Zamawiana ilość</label>
+                </div>
+                <div class="form-floating mb-3 mt-3">
+                    <textarea class="form-control" id="comment" placeholder="Komentarz" name="comment" @bind="comment"></textarea>
+                    <label for="comment">Komentarz</label>
+                </div>
+
+                @if (emptyBox != null && orderAmount>0)
+                {
+                    <input type="button" class="btn btn-success" value="Wyślij zamówienie" @onclick="NewOrder" />
+                }
+
+                <div class="card-footer">
+                    <h6>Zamówienie zostanie wysłane do @ParentUnit.Name</h6>
+                </div>
+            </div>
+        }
+
+
+
+
+
+    }
+
+</div>
+
+
+@code {
+    /// <param name="orderUnit">jednostka zamawiająca</param>
+    /// <param name="parentOrgUnit">jednostka realizująca zamówienie</param>
+    /// <param name="emptyBox">rodzaj OZ</param>
+    /// <param name="orderAmount">ilość zamówiona</param>
+    /// <param name="comment">komentarz</param>
+    /// <param name="zone">Opcjonalnie jeśli możliwe do ustalenia</param>
+    /// <param name="user">Opcjonalnie jeśli możliwe do ustalenia</param>
+
+    bool showSuccess;
+    bool showError;
+    string errortext;
+
+    [Parameter]
+    public int orderUnitid { get; set; }
+    int parentOrgUnitid;
+    EmptyBoxType emptyBox;
+    int orderAmount;
+    string comment;
+    ZoneType zone;
+    UserType user;
+
+    OrgUnit OrderUNIT;
+    OrgUnit ParentUnit;
+
+    List<EmptyBoxType> boxTypes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        OrgUnit orderorgunit = OrgUnit.GetOrgUnitById(orderUnitid);
+        if (orderorgunit == null)
+        {
+            errortext = "Brak sparametryzowanej jednostki";
+            showError = true;
+            return;
+        }
+        if (orderorgunit.EmptyBoxEnable == true)
+        {
+            if (orderorgunit.EmptyBoxParentOrgUnitId != 0)
+            {
+                parentOrgUnitid = orderorgunit.EmptyBoxParentOrgUnitId;
+            }
+            else
+            {
+                //brak sparametryzowanej jednostki
+                errortext = "Brak sparametryzowanej jednostki";
+                showError = true;
+            }
+        }
+        else
+        {
+            //jednostka nie może zamawiać
+            errortext = "Wybrana jednostka nie może zamawiać";
+            showError = true;
+        }
+
+        if (cois != null)
+        {
+            if (cois.User != null)
+            {
+                user = cois.User;
+            }
+        }
+        if (cois != null)
+        {
+            if (cois.Zone != null)
+            {
+                zone = cois.Zone;
+            }
+        }
+
+        boxTypes = EmptyBoxType.GetEmptyBoxTypes();
+        try
+        {
+            emptyBox = boxTypes.First();
+        }
+        catch { }
+
+        OrderUNIT = OrgUnit.GetOrgUnitById(orderUnitid);
+        ParentUnit = OrgUnit.GetOrgUnitById(parentOrgUnitid);
+    }
+
+    void NewOrder()
+    {
+        OrderUNIT = OrgUnit.GetOrgUnitById(orderUnitid);
+        ParentUnit = OrgUnit.GetOrgUnitById(parentOrgUnitid);
+
+        EmptyBoxOrderType.NewOrder(OrderUNIT, ParentUnit, emptyBox, orderAmount, comment, zone, user);
+
+        showSuccess = true;
+    }
+
+
+}

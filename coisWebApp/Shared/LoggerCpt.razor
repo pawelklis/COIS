@@ -1,0 +1,58 @@
+﻿@inject ProgramInstance cois;
+
+<div class="loader">
+    <div class="progres">
+        <h2>Proszę czekać...</h2>
+        <label>@text</label>
+        <div role="progressbar" aria-valuenow="@val" aria-valuemin="0" aria-valuemax="100" style="--value:@val2"></div>
+    </div>
+</div>
+
+
+
+
+
+@code {
+    protected override void OnInitialized()
+    {
+      cois.Logger.OnLog +=LogerLog;
+    }
+
+    string val="0.0";
+    string val2="0";
+    string text = "";
+ 
+    void LogerLog(object sender, LoggerLog e)
+    {
+        val = Math.Round(e.Percent, 2).ToString().Replace(",", ".");
+        val2 = Math.Round(e.Percent, 0).ToString();
+        text =e.Text;
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+}
+
+
+<style>
+    .loader{
+        position:absolute;
+        top:0px;
+        left:0px;
+        width:100%;
+        height:100vh;
+        z-index:10000;
+        background-color:white;
+    }
+
+    .progres{
+        position:absolute;
+        top:50%;
+        left:50%;
+        transform:translate(-50% , -50%);
+        align-items:center;
+        vertical-align:middle;
+        justify-content:center;
+    }
+
+
+
+</style>

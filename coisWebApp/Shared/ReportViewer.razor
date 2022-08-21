@@ -1,0 +1,51 @@
+﻿@inject IJSRuntime JS
+@inject NavigationManager navManager
+@inject IWebHostEnvironment WebHostEnvironment
+
+
+
+<input type="button" class="btn btn-secondary btn-sm" style="margin-left:5px;" value="Raport" @onclick="()=>View(1)" />
+
+
+@code{
+    [Parameter]
+    public ReportName reportname{ get; set; }
+
+    void View(int format)
+    {
+        ReportGenerator reportGenerator = new ReportGenerator(WebHostEnvironment);
+        string filePAth = reportGenerator.GetReport(format, reportname);
+
+        pdf(filePAth);
+
+    }
+
+    async void pdf(string FilePath)
+    {
+        await DownloadFileFromURL(FilePath);
+    }
+
+
+    private async Task Kill(string filePath)
+    {
+        try
+        {
+            await Task.Delay(10000);
+            System.IO.File.Delete(filePath);
+        }
+        catch (Exception)
+        {
+
+        }
+    }
+
+    private async Task DownloadFileFromURL(string filePath)
+    {
+        var fileName = System.IO.Path.GetFileName(filePath);
+        var fileURL = $"../Download/" + fileName;
+        //await JS.InvokeVoidAsync("triggerFileDownload", fileName, fileURL);
+
+        JS.InvokeVoidAsync("open", fileURL, "_blank");
+        await Kill(filePath);
+    }
+}

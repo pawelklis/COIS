@@ -1,0 +1,149 @@
+﻿@page "/infocategoryeditor"
+@inject ProgramInstance cois
+
+<input type="button" class="btn btn-success" @onclick="Add" value = "Dodaj" />
+@if (objects.Count > 0)
+{
+    <table class="table">
+    <thead class="bg-dark text-white sticky-top">
+        <tr>
+            @foreach (var p in objects.First().GetType().GetProperties())
+            {
+                @if (p.CustomAttributes.Where(x=>x.AttributeType.Name=="FrontEndAttribute").Count() > 0)
+                {
+                    FrontEndAttribute fa = (FrontEndAttribute)p.GetCustomAttributes(typeof(FrontEndAttribute), true).First();
+                    @if (fa != null)
+                    {
+                        @if (fa.Show)
+                        {
+                            <th> @fa.Name </th>
+                        }
+                    }
+                }
+            }
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+            @foreach (var o in objects)
+            {
+                <tr>
+                    @foreach (var p in objects.First().GetType().GetProperties())
+                    {
+                        @if (p.CustomAttributes.Where(x=>x.AttributeType.Name=="FrontEndAttribute").Count() > 0)
+                        {
+                            FrontEndAttribute fa = (FrontEndAttribute)p.GetCustomAttributes(typeof(FrontEndAttribute), true).First();
+                            @if (fa != null)
+                            {
+                                @if (fa.Show)
+                                {
+                                    <td> @p.GetValue(o) </td>
+                                }
+                            }
+                        }
+                    }
+                    <td><input type="button" @onclick="()=>Select(o)" class="btn btn-secondary" value="Edytuj"></td>
+                    <td><input type="button" @onclick="()=>{selectedObject=o;confirmDelete=true;}"class="btn btn-danger" value="Usuń"></td>
+                </tr>
+
+            }
+    </tbody>
+</table>
+}
+
+
+@if (showModal)
+{
+    <div class="modal" tabindex="-1" style="display:block;">
+        <div class="modal-dialog" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@selectedObject.Name</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showModal=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                    <label>Nazwa</label>
+                    <input class="form-control" type="text" @bind="selectedObject.Name">
+
+                    <label>Opis</label>
+                    <input class="form-control" type="text" @bind="selectedObject.Description">
+       
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showModal=false">Zamknij</button>
+                    <button type="button" class="btn btn-primary" @onclick="Save">Zapisz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (confirmDelete)
+{
+    <div class="modal" tabindex="-1" style="display:block;opacity:inherit;">
+        <div class="modal-dialog" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Usuwanie obiektu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>confirmDelete=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                    <label>Czy potwierdzasz trwałe usunięcie obiektu?</label>
+       
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>confirmDelete=false">Anuluj</button>
+                    <button type="button" class="btn btn-danger" @onclick="Delete">Usuń</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    bool showModal;
+    bool confirmDelete;
+    List<InfoCategory> objects;
+    InfoCategory selectedObject;
+    protected override void OnInitialized()
+    {
+        Refresh();   
+        base.OnInitialized();
+    }
+
+    void Refresh()
+    {
+        objects = InfoCategory.GetCategories();
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+
+    void Add()
+    {
+        selectedObject = new InfoCategory();
+        showModal = true;
+    }
+
+    void Save()
+    {
+        selectedObject.Save();
+        showModal = false;
+        Refresh();
+    }
+
+    void Select(InfoCategory o)
+    {
+        selectedObject = o;
+        showModal = true;
+    }
+
+    void Delete()
+    {
+        selectedObject.Delete();
+        Refresh();
+        confirmDelete = false;
+    }
+ 
+}

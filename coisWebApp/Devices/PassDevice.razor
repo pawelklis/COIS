@@ -1,0 +1,154 @@
+﻿@page "/passdevice"
+@inject ProgramInstance cois
+
+<div class="modal" style="opacity:1;display:initial;" id="myModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-body" style="height:600px;overflow:auto;">
+                <div>
+                    <h3>Zdawanie sprzętu</h3>
+
+                    @if (employee == null)
+                    {
+                        <select class="form-control" value="@empid" @onchange="ChangeEm">
+                            @foreach (var t in employees)
+                            {
+                                <option value="@t.Id">@t.FullName()</option>
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                        <div class="input-group">
+                            <h5 style="width:calc(100% - 40px);">@employee?.FullName()</h5>
+                            <input type="button" class="btn btn-danger" value="X" @onclick="()=>employee=null" />
+                        </div>
+
+                    }
+
+
+
+                        <h5>Kondycja</h5>
+                        <select class="form-control" value="@conid" @onchange="ChangeCondition">
+                            @foreach (var t in DeviceCondition.GetDeviceConditions())
+                            {
+                                <option value="@t.Id">@t.Name</option>
+                            }
+                        </select>
+                    
+
+                    <h2>@deviceEvidence?.Device().BarCode </h2>
+                    <h5>@deviceEvidence?.Device().Name</h5>
+
+                    <h6>Uwagi</h6>
+                    <textarea placeholder="Ewentualne uwagi dotyczące sprzętu" @bind="deviceEvidence.Device().PassDescription" style="width:100%;">
+
+    </textarea>
+
+                    @if (condition.CanBeUse == false)
+                    {
+                        <h6>Zgłoszenie usterki</h6>
+                        <textarea placeholder="Szczegółowy opis uszkodzenia" @bind="damageDescription" style="width:100%;">
+
+        </textarea>
+                    }
+
+
+                    <div style="position:absolute;bottom:0px;width:90%;" class="modal-footer">
+                        <input type="button" class="btn btn-warning" value="Anuluj" @onclick="OnCancel" />
+
+                        @if (employee != null)
+                        {
+                            @if (deviceEvidence != null)
+                            {
+                                <input type="button" class="btn btn-success" value="Zdaj" @onclick="PassDevices" />
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+@code {
+
+    int empid { get; set; }
+    int conid { get; set; }
+    DeviceCondition condition;
+
+    string damageDescription;
+
+    void ChangeEm(ChangeEventArgs e)
+    {
+        empid = int.Parse(e.Value.ToString());
+        employee = EmployeeType.GetEmployee(int.Parse(e.Value.ToString()));
+    }
+    void ChangeCondition(ChangeEventArgs e)
+    {
+        conid = int.Parse(e.Value.ToString());
+        condition = DeviceCondition.GetDeviceCondition(int.Parse(e.Value.ToString()));
+    }
+
+    [Parameter]
+    public EventCallback OnSaved { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public DeviceEvidence deviceEvidence { get; set; }
+
+    [Parameter]
+    public EmployeeType employee { get; set; }
+
+    /// <summary>
+    /// podać jeśli do wyboru są tylko konkretni pracownicy
+    /// </summary>
+    [Parameter]
+    public List<EmployeeType> employees { get; set; }
+
+
+
+
+    protected override void OnInitialized()
+    {
+        employees = new List<EmployeeType>();
+
+        condition = DeviceCondition.GetDeviceConditions().First();
+        conid = condition.Id;
+
+        if (employee != null)
+        {
+
+        }
+        else
+        {
+        }
+
+        if (employees.Count == 0)
+            GetEmployees();
+    }
+
+
+    public void GetEmployees()
+    {
+        employees = EmployeeType.GetEmployees(cois.Zone.Id);
+    }
+
+    void PassDevices()
+    {
+        DeviceEvidence.PassDevice(deviceEvidence, DateTime.Now, employee, cois.User, cois.Zone, condition, damageDescription);
+        OnSaved.InvokeAsync();
+    }
+
+}

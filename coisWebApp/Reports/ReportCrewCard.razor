@@ -1,0 +1,64 @@
+﻿@inject ProgramInstance cois
+
+<div class="crewItemStyle @isSelectedStyleClass()" @onclick="()=>Click.InvokeAsync(item)">
+    <h6 >@item.Employee.FullName() <label style="color:silver;font-size:small;">@item.GetStatus().Result</label> </h6>
+
+    <div style="display:inline-flex;width:100%;">
+        @foreach (var o in CrewHelper.EmployeeWorkInHours(cois.report.DateStart, cois.report.DateEnd, item))
+        {
+            if (o.Count == 1)
+            {
+                if (o.Hour.Hours == DateTime.Now.Hour)
+                {
+                    <div class="bg-primary" title="@o.Hour.Hours" style="width:@percWidth();height:3px;"></div>
+                }
+                else
+                {
+                    <div class="bg-success" title="@o.Hour.Hours" style="width:@percWidth();height:3px;"></div>
+                }
+            }
+            else
+            {
+                <div title="@o.Hour.Hours" style="width:@percWidth();height50px;background-color:whitesmoke;"></div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CrewItem item { get; set; }
+
+    [Parameter]
+    public EventCallback<CrewItem> Click { get; set; }
+
+    protected override void OnInitialized()
+    {
+        item.Selected = false;
+    }
+
+    int iFrom()
+    {
+        return cois.report.DateStart.Hour;
+    }
+    int iTo()
+    {
+        return (int)cois.report.DateStart.Hour + (int)(cois.report.DateEnd - cois.report.DateStart).TotalHours;
+    }
+    string percWidth()
+    {
+        int to = iTo();
+        int from = iFrom();
+
+        double w = (double)(((double)to - (double)from) / (double)100);
+
+        return Math.Round(w * 100) + "%";
+    }
+
+    string isSelectedStyleClass(){
+        if (item.Selected)
+            return "selectedcrewitem";
+        else
+            return "";
+    }
+}

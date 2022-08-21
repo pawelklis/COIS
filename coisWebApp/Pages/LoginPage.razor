@@ -1,0 +1,42 @@
+﻿@page "/login"
+@inject ProgramInstance cois
+@inject NavigationManager NavManager
+@layout EmptyLayout
+
+<style>
+.centerOnscreen{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50% , -50%);
+}
+</style>
+
+<div class="centerOnscreen">
+    <div class="card text-center" style="width: 18rem;">
+        <div class="card-body">
+            <h5 class="card-title">Logowanie do systemu</h5>
+            <input type="text" class="form-control" @bind="login" />
+            <input type="text" class="form-control" @bind="pwd" />
+            <input type="button" class="btn btn-primary" @onclick="Login" value="Login" />
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+
+    string login="klispawel";
+    string pwd;
+
+    void Login()
+    {
+        cois.Login(login);
+        if (cois.UserLoged)
+        {
+            NavManager.NavigateTo("setorgzone");
+        }
+    }
+
+}

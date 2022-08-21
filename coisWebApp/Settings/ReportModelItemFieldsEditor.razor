@@ -1,0 +1,383 @@
+﻿@inject ProgramInstance cois
+
+@if (tableedit == false)
+{
+    <ul>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Dodaj
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li><a class="dropdown-item" @onclick="()=>Add(1)">Pole tekstowe</a></li>
+                <li><a class="dropdown-item" @onclick="()=>Add(2)">Pole liczbowe</a></li>
+                <li><a class="dropdown-item" @onclick="()=>Add(3)">Pole zaznaczenia</a></li>
+                <li><a class="dropdown-item" @onclick="()=>Add(4)">Pole listy</a></li>
+                <li><a class="dropdown-item" @onclick="()=>Add(5)">Tabela</a></li>
+            </ul>
+        </li>
+    </ul>
+
+
+    @if (objects.Count > 0)
+    {
+        <table class="table  table-hover table-sm">
+            <thead class="bg-dark text-white sticky-top">
+                <tr>
+                    @foreach (var p in objects.First().GetType().GetProperties())
+                    {
+                        @if (p.CustomAttributes.Where(x => x.AttributeType.Name == "FrontEndAttribute").Count() > 0)
+                        {
+                            FrontEndAttribute fa = (FrontEndAttribute)p.GetCustomAttributes(typeof(FrontEndAttribute), true).First();
+                            @if (fa != null)
+                            {
+                                @if (fa.Show)
+                                {
+                                    <th> @fa.Name </th>
+                                }
+                            }
+                        }
+                    }
+                    <th>Kategoria</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in objects)
+                {
+                    <tr>
+                        @foreach (var p in o.GetType().GetProperties())
+                        {
+                            @if (p.CustomAttributes.Where(x => x.AttributeType.Name == "FrontEndAttribute").Count() > 0)
+                            {
+                                FrontEndAttribute fa = (FrontEndAttribute)p.GetCustomAttributes(typeof(FrontEndAttribute), true).First();
+                                @if (fa != null)
+                                {
+                                    @if (fa.Show)
+                                    {
+                                        <td> @p.GetValue(o) </td>
+                                    }
+                                }
+                            }
+                        }
+                        <td>@o.InfoCategory.Name</td>
+                        <td><input type="button" @onclick="()=>Select(o)" class="btn btn-secondary" value="Edytuj"></td>
+
+                        <td><input type="button" @onclick="()=>{selectedObject=o;confirmDelete=true;}" class="btn btn-danger" value="Usuń"></td>
+                    </tr>
+
+                }
+            </tbody>
+        </table>
+    }
+
+@if (showModal)
+{
+       <div class="modal" tabindex="-1" style="display:block;">
+            <div class="modal-dialog" style="display:block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@selectedObject.Name</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showModal=false"></button>
+                    </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                    <label>Nazwa</label>
+                    <input class="form-control" type="text" @bind="selectedObject.Name">
+                    <label>Opis</label>
+                    <input class="form-control" type="text" @bind="selectedObject.Description">
+
+                    @if (selectedObject.GetType() == typeof(ReportModelField_Text))
+                    {
+
+                        <label>Wartość domyślna</label>
+                        <input class="form-control" type="text" @bind="tx.DefaultValue">
+                        <label>Znak wodny</label>
+                        <input class="form-control" type="text" @bind="tx.Placeholder">
+                        <label>Długi tekst</label>
+                        <input class="" type="checkbox" @bind="tx.LongText">
+
+                    }
+                    @if (selectedObject.GetType() == typeof(ReportModelField_Number))
+                    {
+                        <label>Wartość domyślna</label>
+                        <input class="form-control" type="number" @bind="nx.DefaultValue">
+                        <label>Znak wodny</label>
+                        <input class="form-control" type="text" @bind="nx.Placeholder">              
+                    }
+                    @if (selectedObject.GetType() == typeof(ReportModelField_Bool))
+                    {
+                        <label>Wartość domyślna</label>
+                        <input class="" type="checkbox" @bind="bx.DefaultValue">             
+                    }
+                    @if (selectedObject.GetType() == typeof(ReportModelField_List))
+                    {
+                        <label>Wartość źródłowa</label>
+                        <input  type="checkbox" @bind="lx.UseBindingValues">
+                        <br />
+                        @if (lx.UseBindingValues)
+                        {
+                            <label>Filtr jednostki organizacyjnej</label>
+                            <input class="" type="checkbox" @bind="lx.OrgUnitFilter">
+                            <br />
+                            <label>Filtr strefy</label>
+                            <input class="" type="checkbox" @bind="lx.ZoneFilter">
+                            <br />
+                            <select class="form-control" value="@lx.BindingValue" @onchange="ChangeBindingVal">
+                                @foreach (var inf in ReportModelField_List.PossibleBindings())
+                                {
+                                    <option value="@inf" title="@inf">@inf</option>
+                                }
+                            </select>
+
+                        }
+                        else
+                        {
+                            <textarea class="form-control" placeholder="Możliwe wartości oddzielone przecinkiem ','" @bind=lx.PossibleValues></textarea>
+                        }
+
+                        <label>Wartość domyślna</label>
+                        @if (lx.UseBindingValues)
+                        {
+
+                            <select class="form-control" value="@lx.DefaultValue" @onchange="ChangeLxDefVal">
+                                @foreach (var i in lx.NewItem(cois).GetBindingValues(cois))
+                                {
+                                    <option value="@i.Item1" title="@i.Item2">@i.Item2</option>
+                                }
+                            </select>
+
+                        }
+                        else
+                        {
+                            <select class="form-control" value="@lx.DefaultValue" @onchange="ChangeLxDefVal">
+                                @foreach (var i in lx.PossibleValuesList())
+                                {
+                                    <option value="@i" title="@i">@i</option>
+                                }
+                            </select>
+                        }
+
+                    }
+                    @if (selectedObject.GetType() == typeof(ReportModelField_Table))
+                    {
+                        <input type="button" value="Edytj tabelę" @onclick="()=>tableedit=true">
+                        <br />
+                    }
+
+                    <label>Zmiany pracy</label>
+                    <div style="max-height:250px;overflow:auto;">
+                        @foreach (var z in WorkShift.GetWorkShifts(model.EnableZones.ToArray()))
+                        {
+                            <div class="activeLabel">
+                                @if (selectedObject.EnabledAdWorkshifts.Find(x => x.Id == z.Id) != null)
+                                {
+                                    <input type="checkbox" checked value="@z.Id" onclick="return false">
+                                }
+                                else
+                                {
+                                    <input type="checkbox" value="@z.Id" onclick="return false">
+                                }
+                                <label @onclick="()=>ChangeWorkShift(z)">@z.Zone.Name @z.Name</label>
+
+                            </div>
+                        }
+                    </div>
+
+                    <label>Kategoria</label>
+                    <select class="form-control" value="@selectedObject.InfoCategory.Id" @onchange="ChangeCategory">
+                        @foreach (var z in InfoCategory.GetCategories())
+                        {
+                            <option value="@z.Id">
+                                @z.Name
+                            </option>
+                        }
+                    </select>
+
+                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showModal=false">Zamknij</button>
+                        <button type="button" class="btn btn-primary" @onclick="Save">Zapisz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+}
+
+@if (confirmDelete)
+{
+    <div class="modal" tabindex="-1" style="display:block;opacity:inherit;">
+        <div class="modal-dialog" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Usuwanie obiektu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>confirmDelete=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                    <label>Czy potwierdzasz trwałe usunięcie obiektu?</label>
+       
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>confirmDelete=false">Anuluj</button>
+                    <button type="button" class="btn btn-danger" @onclick="Delete">Usuń</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+}
+else
+{
+    <button type="button" class="btn-close"  aria-label="Close" @onclick="()=>tableedit=false"></button>
+    <label>   Tabela @selectedObject.Name</label> 
+    <TableEditor tableField=@tbx model=@model></TableEditor>
+}
+
+
+
+@code {
+    [Parameter]
+    public ReportModelItem item { get; set; }
+    [Parameter]
+    public ReportModel model { get; set; }
+    bool showModal;
+    bool confirmDelete;
+    bool tableedit;
+    List<IReportmodelField> objects{ get; set; }
+
+    ReportModelField_Text tx;
+    ReportModelField_Number nx;
+    ReportModelField_Bool bx;
+    ReportModelField_List lx;
+    ReportModelField_Table tbx;
+
+    IReportmodelField selectedObject;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+        base.OnInitialized();
+    }
+
+    void Refresh()
+    {
+        objects = item.Fields();
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+
+    void Add(int typ)
+    {
+        switch (typ)
+        {
+            case 1:
+                selectedObject = new ReportModelField_Text();
+                tx = (ReportModelField_Text)selectedObject;                
+                item.TextFields.Add(tx);
+                break;
+            case 2:
+                selectedObject = new ReportModelField_Number();
+                nx = (ReportModelField_Number)selectedObject;                
+                item.NumberFields.Add(nx);
+                break;
+            case 3:
+                selectedObject = new ReportModelField_Bool();
+                bx = (ReportModelField_Bool)selectedObject;                
+                item.BoolFields.Add(bx);
+                break;
+            case 4:
+                selectedObject = new ReportModelField_List();
+                lx = (ReportModelField_List)selectedObject;                
+                item.ListFields.Add(lx);
+                break;
+            case 5:
+                selectedObject = new ReportModelField_Table();
+                tbx = (ReportModelField_Table)selectedObject;                
+                item.TableFields.Add(tbx);
+                break;
+            default:
+                break;
+        }
+        showModal = true;
+    }
+
+    void Save()
+    {
+        model.Save();
+        showModal = false;
+        Refresh();
+    }
+
+    void Select(IReportmodelField o)
+    {
+        selectedObject = o;
+        if (selectedObject.GetType() == typeof(ReportModelField_Text))
+            tx =(ReportModelField_Text)selectedObject;
+        if (selectedObject.GetType() == typeof(ReportModelField_Number))
+            nx =(ReportModelField_Number)selectedObject;
+        if (selectedObject.GetType() == typeof(ReportModelField_Bool))
+            bx =(ReportModelField_Bool)selectedObject;
+        if (selectedObject.GetType() == typeof(ReportModelField_List))
+            lx =(ReportModelField_List)selectedObject;
+        if (selectedObject.GetType() == typeof(ReportModelField_Table))
+            tbx =(ReportModelField_Table)selectedObject;
+
+        showModal = true;
+    }
+
+    void Delete()
+    {
+        if (selectedObject.GetType() == typeof(ReportModelField_Text))
+            item.TextFields.Remove((ReportModelField_Text)selectedObject);
+        if (selectedObject.GetType() == typeof(ReportModelField_Number))
+            item.NumberFields.Remove((ReportModelField_Number)selectedObject);
+        if (selectedObject.GetType() == typeof(ReportModelField_Bool))
+            item.BoolFields.Remove((ReportModelField_Bool)selectedObject);
+        if (selectedObject.GetType() == typeof(ReportModelField_List))
+            item.ListFields.Remove((ReportModelField_List)selectedObject);
+        if (selectedObject.GetType() == typeof(ReportModelField_Table))
+            item.TableFields.Remove((ReportModelField_Table)selectedObject);
+
+        Refresh();
+        confirmDelete = false;
+    }
+
+    void ChangeWorkShift(WorkShift z)
+    {
+
+        if (selectedObject.EnabledAdWorkshifts.Find(x => x.Id == z.Id) != null)
+        {
+            for (int i = 0; i < selectedObject.EnabledAdWorkshifts.Count; i++)
+            {
+                if (selectedObject.EnabledAdWorkshifts[i].Id == z.Id)
+                {
+                    selectedObject.EnabledAdWorkshifts.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            selectedObject.EnabledAdWorkshifts.Add(z);
+        }
+    }
+
+    void ChangeCategory(ChangeEventArgs e)
+    {
+        int id=int.Parse(e.Value.ToString());
+        selectedObject.InfoCategory = InfoCategory.GetCategory(id);
+    }
+    
+    void ChangeBindingVal(ChangeEventArgs e)
+    {
+        lx.BindingValue = e.Value.ToString();
+    }
+    void ChangeLxDefVal(ChangeEventArgs e)
+    {
+        lx.DefaultValue = e.Value.ToString();
+    }
+
+}

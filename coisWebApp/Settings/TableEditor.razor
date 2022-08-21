@@ -1,0 +1,209 @@
+﻿@inject ProgramInstance cois
+@using coisWebApp.ReportFields
+
+<input type="button" class="btn btn-primary" value="Dodaj kolumnę" @onclick="AddColumn" />
+<input type="button" class="btn btn-primary" value="Dodaj wiersz" @onclick="AddRow" />
+<input type="button" class="btn btn-success" value="Zapisz" @onclick="Save" />
+
+<table class="table  table-hover table-sm" style="width:100%;">
+    <thead class="bg-dark text-white sticky-top">
+        <tr>
+            @foreach(var col in tableField.Columns)
+            {
+                <th title="@col.Description">@col.Name <input type="button" value="Edytuj" @onclick="()=>EditColumn(col)"> </th>
+            }
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var row in tableField.Rows)
+        {
+            <tr>
+                @foreach(var cel in row.Cells)
+                {
+                    <td>
+                        @if (cel.CellType == ReportModelItem.ReportFieldTypes.Text)
+                        {
+                            <ReportFieldText cell="@cel" longtext="false" ></ReportFieldText>
+                        }
+                        @if (cel.CellType == ReportModelItem.ReportFieldTypes.LongText)
+                        {
+                            <ReportFieldText cell="@cel" longtext="true" ></ReportFieldText>
+                        }
+                        @if (cel.CellType == ReportModelItem.ReportFieldTypes.Number)
+                        {
+                            <ReportFieldNumber cell="@cel"></ReportFieldNumber>
+                        }
+                        @if (cel.CellType == ReportModelItem.ReportFieldTypes.Bool)
+                        {
+                            <ReportFieldBool cell="@cel"></ReportFieldBool>
+                        }
+                        @if (cel.CellType == ReportModelItem.ReportFieldTypes.List)
+                        {
+                            <ReportFieldList cell="@cel"></ReportFieldList>
+                        }
+                    </td>
+                }                
+                    <td>
+                       <button type="button" class="btn btn-danger"  @onclick="()=>{DeleteRow(row);}">Usuń</button>
+
+                    </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (showcolEditor)
+{
+       <div class="modal" tabindex="-1" style="display:block;">
+            <div class="modal-dialog" style="display:block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@editcol.Name</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showcolEditor=false"></button>
+                    </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                    <label>Nazwa</label>
+                    <input class="form-control" type="text" @bind="editcol.Name">
+                    <label>Opis</label>
+                    <input class="form-control" type="text" @bind="editcol.Description">
+                    <div>
+                        <input class="" type="checkbox" @bind="editcol.Lock">
+                        <label>Tylko odczyt</label>
+                    </div>
+                    <label>Typ kolumny</label>
+                    <select class="form-control" value="@editcol.ColumnType" @onchange="ChangeColType">
+                        @foreach (var inf in ReportModelItem.ReportFieldTypesList())
+                        {
+                            @if (inf != "Table")
+                            {
+                              <option value="@inf" title="@inf">@inf</option>                               
+                            }
+                        }
+                    </select>
+
+                    @if (editcol.ColumnType== ReportModelItem.ReportFieldTypes.List)
+                    {
+                        <label>Wartość źródłowa</label>
+                        <input  type="checkbox" @bind="editcol.UseBindingValues">
+                        <br />
+                        @if (editcol.UseBindingValues)
+                        {
+                            <label>Filtr jednostki organizacyjnej</label>
+                            <input class="" type="checkbox" @bind="editcol.OrgUnitFilter">
+                            <br />
+                            <label>Filtr strefy</label>
+                            <input class="" type="checkbox" @bind="editcol.ZoneFilter">
+                            <br />
+                            <select class="form-control" value="@editcol.BindingValue" @onchange="ChangeBindingVal">
+                                @foreach (var inf in ReportModelField_List.PossibleBindings())
+                                {
+                                    <option value="@inf" title="@inf">@inf</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <textarea class="form-control" placeholder="Możliwe wartości oddzielone przecinkiem ','" @bind=editcol.PossibleValues></textarea>
+                        }
+
+                        <label>Wartość domyślna</label>
+                        @if (editcol.UseBindingValues)
+                        {
+                            <select class="form-control" value="@editcol.DefaultValue" @onchange="ChangeLxDefVal">
+                                @foreach (var i in editcol.GetBindingValues(cois))
+                                {
+                                    <option value="@i.Item1" title="@i.Item2">@i.Item2</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <select class="form-control" value="@editcol.DefaultValue" @onchange="ChangeLxDefVal">
+                                @foreach (var i in editcol.PossibleValuesList())
+                                {
+                                    <option value="@i" title="@i">@i</option>
+                                }
+                            </select>
+                        }
+                    }
+
+                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @onclick="()=>{DeleteCol();showcolEditor=false;}">Usuń</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showcolEditor=false">Zamknij</button>
+                        <button type="button" class="btn btn-primary" @onclick="Save">Zapisz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+}
+
+@code {
+    [Parameter]
+    public ReportModelField_Table tableField{ get; set; }
+    [Parameter]
+    public ReportModel model{ get; set; }
+    bool showcolEditor;
+    ReportModelTableColumn editcol;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    void Save()
+    {
+        tableField.ApplyChanges();
+        model.Save();
+        showcolEditor = false;
+        Refresh();
+    }
+    void Refresh()
+    {
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+
+    void AddColumn()
+    {
+        tableField.Columns.Add(new ReportModelTableColumn());
+        Save();
+    }
+    void DeleteCol()
+    {
+        tableField.Columns.Remove(editcol);
+        Save();
+    }
+    void AddRow()
+    {
+        tableField.AddRow();
+        Save();
+    }
+
+    void DeleteRow(ReportModelTableRow row)
+    {
+        tableField.Rows.Remove(row);
+        Save();
+    }
+
+    void EditColumn(ReportModelTableColumn col)
+    {
+        editcol = col;
+        showcolEditor = true;
+    }
+
+    void ChangeColType(ChangeEventArgs e)
+    {
+        string v = e?.Value?.ToString();
+        editcol.ColumnType = ReportModelTableColumn.GetFieldType(v);
+    }
+     void ChangeBindingVal(ChangeEventArgs e)
+    {
+        editcol.BindingValue = e.Value.ToString();
+    }
+    void ChangeLxDefVal(ChangeEventArgs e)
+    {
+        editcol.DefaultValue = e.Value.ToString();
+    }
+}

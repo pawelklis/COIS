@@ -1,0 +1,73 @@
+﻿@inject ProgramInstance cois
+<div class="frame">
+    <h6>Rozpoczęcie delegowania</h6>
+    <div class="input-group">
+        <select class="form-control " style="font-size:small;" value="@filterId" title="Strefa docelowa" @onchange="ChangeFilter">
+            @foreach (var z in ZoneType.GetZoneByOrgUnitId(cois.OrgUnit.Id))
+            {
+                @if (z.Id != cois.Zone.Id)
+                {
+                    <option value="@z.Id">
+                        @z.Name
+                    </option>
+                }
+            }
+        </select>
+        <input class="form-control small" style="font-size:small;" title="Czas rozpoczecia" type="datetime-local" value="@startDate.ToString(Format)" @onchange="ChangeStartTime">
+        <input class="form-control small" style="font-size:small;" title="Czas zakończenia" type="datetime-local" value="@endDate.ToString(Format)" @onchange="ChangeEndTime">
+        <input class="form-control small" style="font-size:small;" type="text" placeholder="Dodatkowy opis" @bind="description">
+
+        @if (filterId != 0)
+        {
+            <input type="button" class="btn btn-primary" value="Deleguj" @onclick="StartDelegation">
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback AfterDelegate { get; set; }
+
+    [Parameter]
+    public List<EmployeeType> employees {get;set;}
+
+    DateTime startDate;    
+    DateTime endDate;    
+    public string Format { get; set; } = "yyyy-MM-ddTHH:mm";
+    int filterId;
+    string description="";
+
+    protected override void OnInitialized()
+    {
+        startDate = DateTime.Now;
+        endDate = DateTime.Now.AddHours(1);
+    }
+
+    void StartDelegation()
+    {
+        ZoneType toZone = ZoneType.GetZoneById(filterId);
+        foreach(var employee in employees)
+        {
+            if(employee.ActiveDelegation()==null)
+                DelegationType.NewDelegation(cois.report.Id, cois.Zone, toZone, startDate, endDate, employee, description);
+        }
+
+        AfterDelegate.InvokeAsync();
+    }
+
+    void ChangeFilter(ChangeEventArgs e)
+    {
+        int id=int.Parse(e.Value.ToString());
+        filterId = id;
+    }
+    
+    void ChangeStartTime(ChangeEventArgs e)
+    {
+        startDate=DateTime.Parse(e.Value.ToString());
+    }    
+    void ChangeEndTime(ChangeEventArgs e)
+    {
+        endDate=DateTime.Parse(e.Value.ToString());
+    }
+
+}

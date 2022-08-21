@@ -1,0 +1,119 @@
+﻿@page "/reporteditor"
+
+@using Append.Blazor.Printing
+@inject IJSRuntime JSRuntime
+@inject ProgramInstance cois
+@inject NavigationManager navManager
+@inject  IPrintingService PrintingService
+
+<div style="display:flex;">
+    <h3>@cois?.report?.Name @cois?.report?.Number @cois?.report?.WorkShift?.HoursWorkString()</h3>
+    <input type="button" @onclick="()=>report.Save()" value="Zapisz" style="  margin-left: auto;order: 2;" class="btn btn-success small" />
+</div>
+<div class="container-fluid">
+
+
+
+
+
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+
+        @if (model.HasCrew)
+        {
+            <li class="nav-item" role="presentation" style="margin-left: 2px;">
+                <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Obsada</button>
+            </li>
+        }
+        @if (model.HasDelegations)
+        {
+            <li class="nav-item" role="presentation" style="margin-left: 2px;">
+                <button class="nav-link" id="profile-tab" @onclick="refreshDel" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Delegowanie</button>
+            </li>
+        }
+        @foreach (var i in report.Items)
+        {
+            <li class="nav-item" role="presentation" style="margin-left: 2px;">
+                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#@i.QuerySelector()" type="button" role="tab" aria-controls="profile" aria-selected="false">@i.Name</button>
+            </li>
+        }
+        <li class="nav-item" role="presentation" style="margin-left: 2px;">
+            <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#opcje" type="button" role="tab" aria-controls="profile" aria-selected="false">Opcje</button>
+        </li>
+
+    </ul>
+    <div class="tab-content" id="myTabContent">
+
+        @if (model.HasCrew)
+        {
+            <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                <coisWebApp.Reports.ReportCrew @ref="reportCrewCpt"></coisWebApp.Reports.ReportCrew>
+            </div>
+        }
+        @if (model.HasDelegations)
+        {
+            <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                <coisWebApp.Reports.ReportDelegations @ref="delegationCpt" ></coisWebApp.Reports.ReportDelegations>
+            </div>
+        }
+        @foreach (var i in report.Items)
+        {
+            <div class="tab-pane fade" id="@i.QuerySelector()" role="tabpanel" aria-labelledby="contact-tab">
+                <coisWebApp.Reports.ReportEditorItem @ref="reportEditorItemCpt" item="@i"></coisWebApp.Reports.ReportEditorItem>
+            </div>
+        }
+
+        <div class="tab-pane fade" id="opcje" role="tabpanel" aria-labelledby="contact-tab">
+            <div class="centerOnscreen">
+                <input type="button" class="btn btn-danger" value="Zakończ raport" @onclick="EnReport"/>
+                <input type="button" class="btn btn-primary" value="Drukuj raport" @onclick="Print"/>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@code {
+
+    coisWebApp.Reports.ReportCrew reportCrewCpt { get; set; }
+    coisWebApp.Reports.ReportDelegations delegationCpt { get; set; }
+    coisWebApp.Reports.ReportEditorItem reportEditorItemCpt { get; set; }
+
+
+
+    void refreshDel()
+    {
+        if (delegationCpt != null)
+            delegationCpt.GetDelegations();
+    }
+    void refreshCrew()
+    {
+        if (reportCrewCpt != null)
+            reportCrewCpt.Bind();
+    }
+
+    protected override void OnInitialized()
+    {
+        report = cois.report;
+        model = cois.report.GetModel();
+    }
+
+    ReportModel model { get; set; }
+    ReportType report { get; set; }
+
+    void EnReport()
+    {
+        report.EndReport();
+        cois.report = null;
+        navManager.NavigateTo("/");
+    }
+    void Print()
+    {
+        string filename = cois.report.PrintReport();
+        PrintingService.Print(filename);
+        string url = filename.Replace("wwwroot/", "");
+        JSRuntime.InvokeAsync<object>("open", url , "_blank");
+    }
+}
+

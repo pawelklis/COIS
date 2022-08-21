@@ -1,0 +1,105 @@
+﻿@page "/devicestopass"
+@inject ProgramInstance cois
+
+<h3>Urządzenia do zdania</h3>
+
+
+<table class="table table-hover table-sm">
+    <thead class="bg-dark text-white sticky-top">
+        <tr>
+            <th>Urządzenie</th>
+            <th>Rodzaj</th>
+            <th>Pobrał</th>
+            <th>Czas pobrania</th>
+            <th>Strefa</th>
+            <th>Wydał</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var d in Evidences)
+    {
+        <tr>
+            <td>@d.Device().Name</td>
+            <td>@d.DeviceClass</td>
+            <td>@d.GetEmployee.FullName()</td>
+            <td>@d.GetTime</td>
+            <td>@d.GetZone.Name</td>
+            <td>@d.GetManagerEmployee?.FullName()</td>
+            <td><input type="button" class="btn btn-primary" value="Zdaj" @onclick="()=>passDevice(d)" /></td>
+        </tr>
+    }
+    </tbody>
+
+
+</table>
+
+
+@if (showpass == true)
+{
+    <div class="modal" tabindex="-1" style="opacity:1;display:initial;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Zdawanei sprzętu</h5>
+                </div>
+                <div class="modal-body">
+                    <coisWebApp.Devices.PassDevice deviceEvidence="SelectedDeviceEvidence" employee="selectedpassEmployee" OnSaved="change" OnCancel="change" ></coisWebApp.Devices.PassDevice>
+                </div>
+                <div class="modal-footer">
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+
+@code {
+    [Parameter]
+    public EventCallback OnSaved { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback OnChange { get; set; }
+
+    [Parameter]
+    public DeviceEvidence.deviceclass deviceclass { get; set; }
+
+    List<DeviceEvidence> Evidences { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Bind();
+    }
+
+    public void Bind()
+    {
+        Evidences = DeviceEvidence.GetDevicesToPass(cois.Zone.OrganizationUnit().Id,0);
+    }
+
+    DeviceEvidence SelectedDeviceEvidence { get; set; }
+    EmployeeType selectedpassEmployee;
+    void passDevice(DeviceEvidence dv)
+    {
+        SelectedDeviceEvidence = dv;
+        selectedpassEmployee = dv.GetEmployee;
+        showpass = true;
+    }
+
+    bool showpass { get; set; }
+
+
+    void change()
+    {
+        showpass = false;
+        OnChange.InvokeAsync();
+        Bind();
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+
+}

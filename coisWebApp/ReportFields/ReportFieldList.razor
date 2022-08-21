@@ -1,0 +1,105 @@
+﻿@inject ProgramInstance cois
+
+@if (cel != null)
+{
+
+    @if (cel.Column.UseBindingValues)
+    {
+
+        <select class="form-control" value="@cel.Value" @onchange="ChangeVall">
+            @foreach (var i in cel.Column.GetBindingValues(cois))
+            {
+                <option value="@i.Item1" title="@i.Item2">@i.Item2</option>
+            }
+        </select>
+
+    }
+    else
+    {
+        <select class="form-control" value="@cel.Value" @onchange="ChangeVall">
+            @foreach (var i in cel.Column.PossibleValuesList())
+            {
+                <option value="@i" title="@i">@i</option>
+            }
+        </select>
+    }
+
+}
+@if (cell != null)
+{
+
+    @if (cell.Column.UseBindingValues)
+    {
+
+        <select class="form-control" value="@cell.Value" @onchange="ChangeVal">
+            @foreach (var i in cell.Column.GetBindingValues(cois))
+            {
+                <option value="@i.Item1" title="@i.Item2">@i.Item2</option>
+            }
+        </select>
+
+    }
+    else
+    {
+        <select class="form-control" value="@cell.Value" @onchange="ChangeVal">
+            @foreach (var i in cell.Column.PossibleValuesList())
+            {
+                <option value="@i" title="@i">@i</option>
+            }
+        </select>
+    }
+
+}
+@if(field!=null)
+{
+    @if (field.UseBindingValues)
+    {
+
+        <select class="form-control" value="@field.Value" @onchange="ChangeValField">
+            @foreach (var i in field.GetBindingValues(cois))
+            {
+                <option value="@i.Item1" title="@i.Item2">@i.Item2</option>
+            }
+        </select>
+
+    }
+    else
+    {
+        <select class="form-control" value="@field.Value" @onchange="ChangeValField">
+            @foreach (var i in field.PossibleValuesList())
+            {
+                <option value="@i" title="@i">@i</option>
+            }
+        </select>
+    }
+}
+
+
+
+@code {
+    [Parameter]
+    public ReportRowCell cel{ get; set; }  
+    [Parameter]
+    public ReportModelRowCell cell{ get; set; }    
+    [Parameter]
+    public IReportField _field{ get; set; }
+    public ReportField_List field{ get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (_field != null)
+            field = (ReportField_List)_field;
+    }
+    void ChangeVall(ChangeEventArgs e)
+    {
+        cel.Value = e.Value.ToString();
+    }
+    void ChangeVal(ChangeEventArgs e)
+    {
+        cell.Value = e.Value.ToString();
+    }
+    void ChangeValField(ChangeEventArgs e)
+    {
+        field.Value = e.Value.ToString();
+    }
+}

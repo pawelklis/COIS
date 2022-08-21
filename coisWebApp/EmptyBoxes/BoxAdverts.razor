@@ -1,0 +1,380 @@
+﻿@page "/boxadverts"
+@inject ProgramInstance cois
+@inject IJSRuntime js
+
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Moje ogłoszenia</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Giełda</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab" aria-controls="contact" aria-selected="false">Zamówienia</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="suborgunits-tab" data-bs-toggle="tab" data-bs-target="#suborgunits" type="button" role="tab" aria-controls="suborgunits" aria-selected="false">Jednostki podrzędne</button>
+  </li>
+</ul>
+<div class="tab-content" id="myTabContent">
+  <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+
+      <input type="button" class="btn btn-primary" value="Dodaj ogłoszenie" @onclick="()=>showNewAdvert=true" />
+
+      <table class="table table-hover table-sm">
+          <thead class="bg-dark text-white sticky-top">
+              <tr>
+                  <th>Typ</th>
+                  <th>Rodzaj OZ</th>
+                  <th>Komentarz</th>
+                  <th>Ilość</th>
+                  <th>Pozostała ilość</th>
+                  <th>Oferty</th>
+                  <th></th>
+              </tr>
+          </thead>
+          <tbody>
+                @foreach(var a in myAdverts)
+                {
+                    <tr>
+                        <td>@a.AvertTypeString()</td>
+                        <td>@a.EmptyBox.Name</td>
+                        <td>@a.Comment</td>
+                        <td>@a.Amount</td>
+                        <td>@a.EnableAmmount()</td>
+                        <td>
+                            @foreach(var o in a.Offerts)
+                            {
+                                <BoxOffert offert="@o" advert="@a" selfOfferts="true" NeedRefresh="@Refresh"></BoxOffert>
+                            }
+                        </td>
+                        <td><input type="button" class="btn btn-warning" @onclick="()=>a.Close(cois.User)" value="Zamknij" /></td>
+                    </tr>
+                }
+            </tbody>
+      </table>
+
+  </div>
+  <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+       <table class="table table-hover table-sm">
+          <thead class="bg-dark text-white sticky-top">
+              <tr>
+                  <th>Typ</th>
+                  <th>Rodzaj OZ</th>
+                  <th>Komentarz</th>
+                  <th>Ilość</th>
+                  <th>Pozostała ilość</th>
+                  <th>Oferty</th>
+                  <th></th>
+              </tr>
+          </thead>
+          <tbody>
+                @foreach(var a in otherAdverts)
+                {
+                    <tr>
+                        <td>@a.AvertTypeString()</td>
+                        <td>@a.EmptyBox.Name</td>
+                        <td>@a.Comment</td>
+                        <td>@a.Amount</td>
+                        <td>@a.EnableAmmount()</td>
+                        <td>
+                            @foreach(var o in a.Offerts)
+                            {
+                                <BoxOffert offert="@o" advert="@a" selfOfferts="false" NeedRefresh="@Refresh"></BoxOffert>
+                            }
+                        </td>
+                        <td>                            
+                            <input type="button" class="btn btn-primary" value="Dodaj ofertę" @onclick="()=>{selectedAdvert=a; showNew=true;}"/>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+      </table>
+  </div>
+  <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+      <Orders></Orders>
+  </div>
+  <div class="tab-pane fade" id="suborgunits" role="tabpanel" aria-labelledby="suborgunits-tab">
+
+      <table class="table table-hover table-sm">
+          <thead class="bg-dark text-white sticky-top">
+              <tr>
+                  <th>Nazwa</th>
+                  <th></th>
+              </tr>
+          </thead>
+          <tbody>
+            @foreach(var o in cois.OrgUnit.GetOrgEmptyBoxesSubOrgUnits())
+            {
+                <tr>
+                    <td>@o.Name</td>
+                    <td><input type="button" class="btn btn-primary" value="Link" @onclick="()=>ShowLink(o)" /></td>
+                </tr>
+            }
+          </tbody>
+      </table>
+
+    </div>
+</div>
+
+@if (showNew)
+{
+    <div class="modal" tabindex="-1" style="display:block;">
+        <div class="modal-dialog" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dodanie oferty</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showNew=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                    <label>Oferowana ilość</label>
+                    <input type="number" class="form-control" min="1" max="99999" @bind="@amount"></input>  
+
+                    <label>Komentarz</label>
+                    <textarea class="form-control" @bind="@comment"></textarea>              
+
+       
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showNew=false">Anuluj</button>
+                    @if (amount <= selectedAdvert.EnableAmmount())
+                    {
+                      <button type="button" class="btn btn-primary" @onclick="AddOfert">Zaakceptuj</button>                         
+                    }
+                      
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showNewAdvert)
+{
+        <div class="modal" tabindex="-1" style="display:block;">
+        <div class="modal-dialog" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nowe ogłoszenie</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showNewAdvert=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                    <label>Rodzaj oferty</label>
+                    <select class="form-control" value="@adverttype" @onchange="ChangeTypAdvert">
+                        <option value="1">Oddam</option>
+                        <option value="2">Potrzebuje</option>
+                    </select>
+
+                    @code {
+                    void ChangeTypAdvert(ChangeEventArgs e)
+                    {
+                        adverttype = int.Parse(e.Value.ToString());
+                    }
+                }
+
+                <label>Rodzaj OZ</label>
+                <select class="form-control" value="@emptybox.Id" @onchange="ChangeTyp">
+                    @foreach (var t in boxTypes)
+                        {
+                            <option title="@t.Description" value="@t.Id">@t.Name</option>
+                        }
+                    </select>
+
+                    @code {
+                    void ChangeTyp(ChangeEventArgs e)
+                    {
+                        emptybox = EmptyBoxType.GetEmptyBoxById(int.Parse(e.Value.ToString()));
+                    }
+                }
+
+                    <label>Ilość</label>
+                    <input class="form-control"  type="number" min="1" max="99999" @bind="@amount"></input>  
+
+                    <label>Komentarz</label>
+                    <textarea class="form-control"  @bind="@comment"></textarea>              
+
+       
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showNewAdvert=false">Anuluj</button>
+                    <button type="button" class="btn btn-primary" @onclick="CheckNewAdvert">Zaakceptuj</button>
+                    @if (showAlternatives)
+                    {
+                        @alternativeText
+                        <button type="button" class="btn btn-primary" @onclick="AddAlternativeAdvert">Tak</button>
+                        <button type="button" class="btn btn-primary" @onclick="AddAdvert">Nie</button>
+                    }
+                    else
+                    {
+                        
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    bool showNewAdvert;
+
+    List<EmptyBoxAdvert> myAdverts{ get; set; }
+    List<EmptyBoxAdvert> otherAdverts{ get; set; }
+
+    List<EmptyBoxType> boxTypes;
+
+    bool showNew;
+    EmptyBoxAdvert selectedAdvert;
+    bool showAlternatives;
+
+    int adverttype;
+    EmptyBoxType emptybox;
+    int amount;
+    string comment;
+
+    protected override void OnInitialized()
+    {
+
+        boxTypes=EmptyBoxType.GetEmptyBoxTypes();
+        emptybox=boxTypes.First();
+
+        if(possibleAdverts==null)
+            possibleAdverts = new List<EmptyBoxAdvert>();
+
+        adverttype = 1;
+        Refresh();
+
+        EmptyBoxAdvert.NeedRefresh += OnNeedRefresh;
+    }
+    void OnNeedRefresh(object sender,EventArgs e)
+    {
+        Refresh();
+    }
+    void Refresh()
+    {
+        GetMyAdverts();
+        GetOtherAdverts();
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+    void GetMyAdverts()
+    {
+        myAdverts = EmptyBoxAdvert.GetMyActiveAdverts(cois.OrgUnit.Id);
+    }
+    void GetOtherAdverts()
+    {
+        otherAdverts = EmptyBoxAdvert.GetOtherActiveAdverts(cois.OrgUnit.Id);
+    }
+    void AddAdvert()
+    {
+        EmptyBoxAdvert.NewAdvert(cois.OrgUnit.Id,adverttype,emptybox,amount,comment,cois.User);
+        showNewAdvert = false;
+        Refresh();
+
+        showAlternatives=false;
+        possibleAdverts = null;
+        alternativeText = "";
+    }
+    void AddAlternativeAdvert()
+    {
+        if (possibleSum >= amount)
+        {
+            foreach(var a in possibleAdverts)
+            {
+                if (amount > 0)
+                {
+                    if (a.EnableAmmount() >= amount)
+                    {
+                        a.AddOffert(cois.OrgUnit.Id, amount, comment, cois.User);
+                        amount-=0;
+                    }
+                    else
+                    {
+                        a.AddOffert(cois.OrgUnit.Id, a.EnableAmmount(), comment, cois.User);
+                        amount-=a.EnableAmmount();
+                    }
+
+                }
+            }
+        }
+        else
+        {
+            foreach(var a in possibleAdverts)
+            {
+                if (amount > 0)
+                {
+                    if (a.EnableAmmount() >= amount)
+                    {
+                        a.AddOffert(cois.OrgUnit.Id, amount, comment, cois.User);
+                        amount-=0;
+                    }
+                    else
+                    {
+                        a.AddOffert(cois.OrgUnit.Id, a.EnableAmmount(), comment, cois.User);
+                        amount-=a.EnableAmmount();
+                    }
+                }
+            }
+            if(amount>0)
+                AddAdvert();
+        }
+        showAlternatives=false;
+        possibleSum = 0;
+        possibleAdverts = new List<EmptyBoxAdvert>();
+        alternativeText = "";
+    }   
+    string alternativeText = "";
+    int possibleSum = 0;
+    List<EmptyBoxAdvert> possibleAdverts; 
+    void CheckNewAdvert()
+    {
+        if (possibleAdverts == null)
+            possibleAdverts = new List<EmptyBoxAdvert>();
+
+        int neagtiveadverttype;
+        if (adverttype == 1)
+            neagtiveadverttype = 2;
+        else
+            neagtiveadverttype = 1;
+
+        possibleSum = 0;
+
+        foreach(var a in otherAdverts.Where(x=>x.EmptyBox.Id==emptybox.Id && x.AdvertType==neagtiveadverttype))
+        {
+            possibleAdverts.Add(a);
+            possibleSum += a.EnableAmmount();
+        }
+
+        if (possibleAdverts.Count > 0)
+        {
+            if (possibleSum >= amount)
+            {
+                alternativeText = $"Istnieje {possibleAdverts.Count} ogłoszeń spełniających Twoje potrzeby, czy zamiasta nowego ogłoszenia dodać oferty?";
+            }
+            if (possibleSum < amount)
+            {
+                alternativeText = $"Istnieje {possibleAdverts.Count} ogłoszeń spełniających częściowo Twoje potrzeby, czy dodać oferty do pasujących ogłoszeń oraz nowe ogłoszenie na ilość {amount-possibleSum} OZ?";
+            }
+            showAlternatives=true;
+
+        }
+        else
+        {
+            AddAdvert();
+        }
+    }
+    void AddOfert()
+    {
+        selectedAdvert.AddOffert(cois.OrgUnit.Id, amount, comment, cois.User);
+        showNew = false;
+        Refresh();
+    }
+
+
+    void ShowLink(OrgUnit o)
+    {
+        string url = $"/emptyboxorder/{o.Id}";
+        js.InvokeAsync<object>("open", url , "_blank");
+    }
+
+}

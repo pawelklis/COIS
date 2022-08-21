@@ -1,0 +1,284 @@
+﻿@page "/damages"
+
+@inject ProgramInstance cois
+
+<div class="container-fluid">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation" style="margin-left: 2px;">
+            <button class="nav-link active" id="scanners-tab" data-bs-toggle="tab" data-bs-target="#scanners" type="button" role="tab" aria-controls="scanners" aria-selected="true">Skanery</button>
+        </li>
+        <li class="nav-item" role="presentation" style="margin-left: 2px;">
+            <button class="nav-link" id="forklifts-tab" data-bs-toggle="tab" data-bs-target="#forklifts" type="button" role="tab" aria-controls="forklifts" aria-selected="false">Elektrowózki</button>
+        </li>
+        <li class="nav-item" role="presentation" style="margin-left: 2px;">
+            <button class="nav-link" id="forklifts-tab" data-bs-toggle="tab" data-bs-target="#requisites" type="button" role="tab" aria-controls="forklifts" aria-selected="false">Rekwizyty</button>
+        </li>
+
+        <li class="nav-item" role="presentation" style="margin-left: 2px;">
+            <button class="nav-link" id="forklifts-tab" data-bs-toggle="tab" data-bs-target="#baterries" type="button" role="tab" aria-controls="forklifts" aria-selected="false">Baterie</button>
+        </li>
+
+    </ul>
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="scanners" role="tabpanel" aria-labelledby="scanners-tab">
+            <table class="table table-hover table-sm">
+                <thead class="bg-dark text-white sticky-top">
+                    <tr>
+                        <th>Utworzono</th>
+                        <th>Zarejestrował</th>
+                        <th>Uzytkownik sprzętu</th>
+                        <th>Urządzenie</th>
+                        <th>Opis uszkodzenia</th>
+                        <th>Ostatni status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var d in openDamages.Where(x=>x.DeviceClass== DeviceEvidence.deviceclass.Skaner))
+                    {
+                        <tr>
+                            <td>@d.RegisterDate</td>
+                            <td>@d.User?.Employee?.FullName()</td>
+                            <td>@d.Employee?.FullName()</td>
+                            <td>@d.Device().BarCode @d.Device().Name</td>
+                            <td>@d.DamageDescription</td>
+                            <td>
+                                @if (d.History.Count > 0)
+                                {
+                                    <div style="font-size:smaller;">
+                                        @d.History.OrderBy(x=>x.Time).Last().DamageLevel.ToString()
+                                    </div>
+                                    <div  style="font-size:smaller;">
+                                        @d.History.OrderBy(x=>x.Time).Last().Time @d.History.Last().Description      
+                                    </div>
+                             
+                                }
+                            </td>
+                            <td>
+                                <input type="button" class="btn btn-secondary" value="Edytuj" @onclick="()=>editDamage(d)">
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="tab-pane fade" id="forklifts" role="tabpanel" aria-labelledby="forklifts-tab">
+            <table class="table table-hover table-sm">
+                <thead class="bg-dark text-white sticky-top">
+                    <tr>
+                        <th>Utworzono</th>
+                        <th>Zarejestrował</th>
+                        <th>Uzytkownik sprzętu</th>
+                        <th>Urządzenie</th>
+                        <th>Opis uszkodzenia</th>
+                        <th>Ostatni status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var d in openDamages.Where(x=>x.DeviceClass== DeviceEvidence.deviceclass.Elektrowózek))
+                    {
+                        <tr>
+                            <td>@d.RegisterDate</td>
+                            <td>@d.User?.Employee?.FullName()</td>
+                            <td>@d.Employee?.FullName()</td>
+                            <td>@d.Device().BarCode @d.Device().Name</td>
+                            <td>@d.DamageDescription</td>
+                            <td>
+                                @if (d.History.Count > 0)
+                                {
+                                    <div style="font-size:smaller;">
+                                        @d.History.OrderBy(x=>x.Time).Last().DamageLevel.ToString()
+                                    </div>
+                                    <div  style="font-size:smaller;">
+                                        @d.History.OrderBy(x=>x.Time).Last().Time @d.History.Last().Description      
+                                    </div>
+                             
+                                }
+                            </td>
+                            <td>
+                                <input type="button" class="btn btn-secondary" value="Edytuj" @onclick="()=>editDamage(d)">
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="tab-pane fade" id="requisites" role="tabpanel" aria-labelledby="contact-tab">
+            <table class="table table-hover table-sm">
+                <thead class="bg-dark text-white sticky-top">
+                    <tr>
+                        <th>Utworzono</th>
+                        <th>Zarejestrował</th>
+                        <th>Uzytkownik sprzętu</th>
+                        <th>Urządzenie</th>
+                        <th>Opis uszkodzenia</th>
+                        <th>Ostatni status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var d in openDamages.Where(x=>x.DeviceClass== DeviceEvidence.deviceclass.Rekwizyt))
+                    {
+                        <tr>
+                            <td>@d.RegisterDate</td>
+                            <td>@d.User?.Employee?.FullName()</td>
+                            <td>@d.Employee?.FullName()</td>
+                            <td>@d.Device().BarCode @d.Device().Name</td>
+                            <td>@d.DamageDescription</td>
+                            <td>
+                                @if (d.History.Count > 0)
+                                {
+                                    <div style="font-size:smaller;">
+                                        @d.History.OrderBy(x=>x.Time).Last().DamageLevel.ToString()
+                                    </div>
+                                    <div  style="font-size:smaller;">
+                                        @d.History.OrderBy(x=>x.Time).Last().Time @d.History.Last().Description      
+                                    </div>
+                             
+                                }
+                            </td>
+                            <td>
+                                <input type="button" class="btn btn-secondary" value="Edytuj" @onclick="()=>editDamage(d)">
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="tab-pane fade" id="baterries" role="tabpanel" aria-labelledby="contact-tab">
+            <table class="table table-hover table-sm">
+                <thead class="bg-dark text-white sticky-top">
+                    <tr>
+                        <th>Utworzono</th>
+                        <th>Zarejestrował</th>
+                        <th>Uzytkownik sprzętu</th>
+                        <th>Urządzenie</th>
+                        <th>Opis uszkodzenia</th>
+                        <th>Ostatni status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var d in openDamages.Where(x=>x.DeviceClass== DeviceEvidence.deviceclass.Bateria))
+                    {
+                        <tr>
+                            <td>@d.RegisterDate</td>
+                            <td>@d.User?.Employee?.FullName()</td>
+                            <td>@d.Employee?.FullName()</td>
+                            <td>@d.Device().BarCode @d.Device().Name</td>
+                            <td>@d.DamageDescription</td>
+                            <td>
+                                @if (d.History.Count > 0)
+                                {
+                                    <div style="font-size:smaller;">
+                                        @d.History.OrderBy(x=>x.Time).Last().DamageLevel.ToString()
+                                    </div>
+                                    <div  style="font-size:smaller;">
+                                        @d.History.OrderBy(x=>x.Time).Last().Time @d.History.Last().Description      
+                                    </div>
+                             
+                                }
+                            </td>
+                            <td>
+                                <input type="button" class="btn btn-secondary" value="Edytuj" @onclick="()=>editDamage(d)">
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (showEdit)
+{
+    <div class="modal" style="opacity:1;display:initial;" id="myModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body" style="height:600px;overflow:auto;">
+                    <div class="frame" style="height:150px;overflow:auto;">
+                        <h2>@selected.Device().BarCode</h2>
+                        <div>@selected.Device().Name</div>
+                        <div style="font-size:small;">@selected.DamageDescription</div>
+                    </div>
+
+                    <div class="frame" style="height:150px;overflow:auto;font-size:small;">
+
+                        @foreach(var h in selected.History.OrderBy(x => x.Time))
+                        {
+                            <div>
+                                <div>
+                                    @h.Time
+                                    @h.User.Employee.FullName();
+                                    @h.DamageLevel
+                                    @h.Description
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+                    <h5>Nowe zdarzenie</h5>
+                    <div class="frame">
+                        <label>Rodzaj czynności</label>
+                        <select class="form-control" value="@damagelevel" @onchange="ChangeLevel">
+                            @foreach (var t in Enum.GetValues(typeof(DeviceDamageLevel)).Cast<DeviceDamageLevel>())
+                            {
+                                <option value="@t">@t.ToString()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="frame">
+                        <label>Opis</label>
+                        <textarea class="form-control" style="width:100%" @bind="description">
+                        </textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <input type="button" class="btn btn-warning" value="Anuluj" @onclick="()=>showEdit=false">
+                    <input type="button" class="btn btn-success" value="Zapisz" @onclick="RegisterLevel">
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    bool showEdit;
+    DeviceDamage selected;
+    List<DeviceDamage> openDamages { get; set; }
+
+    DeviceDamageLevel damagelevel;
+    string description;
+
+    protected override void OnInitialized()
+    {
+        openDamages = DeviceDamage.GetDamages(false);
+        base.OnInitialized();
+    }
+
+
+    void editDamage(DeviceDamage damage)
+    {
+        selected = damage;
+        showEdit = true;
+    }
+
+    void RegisterLevel()
+    {
+        selected.AddHistory(description, cois.User, damagelevel);
+
+        showEdit = false;
+
+                openDamages = DeviceDamage.GetDamages(false);
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+
+    void ChangeLevel(ChangeEventArgs e)
+    {
+        damagelevel = Enum.GetValues(typeof(DeviceDamageLevel)).Cast<DeviceDamageLevel>().ToList().Find(x=>x.ToString() == e.Value.ToString());
+
+    }
+}

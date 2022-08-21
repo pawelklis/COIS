@@ -1,0 +1,237 @@
+﻿@page "/crewmodelshedulex"
+@inject ProgramInstance cois
+
+
+<h3>Harmonogram pracy</h3>
+
+<div class="input-group" style="width:500px;">
+    <select class="form-control" value="@YearSelected" @onchange="ChangeYear">
+        @foreach (var t in years)
+        {
+            <option value="@t">@t</option>
+        }
+    </select>
+
+
+    <select class="form-control" value="@MonthSelected" @onchange="ChangeMonth">
+        @foreach (var t in months)
+        {
+            <option value="@t">@t</option>
+        }
+    </select>
+
+
+
+    <SelectZoneCpt ParentId="session.LogedZone.OrganizationUnit.Id" ValueChanged="ZoneChange" firstSelected="true"></SelectZoneCpt>
+
+    <input type="button" class="btn btn-primary" value="Pokaż dane" @onclick="Bind" />
+</div>
+
+<input type="button" class="btn btn-success" value="Dodaj" @onclick="Add" data-bs-toggle="modal" data-bs-target="#myModal" />
+
+
+
+@if (objects != null || objects?.Count > 0)
+{
+    <table class="table table-hover table-sm">
+        <thead class="bg-dark text-white sticky-top">
+            <tr>
+                <th>Pracownik</th>
+                <th>Czas rozpoczęcia</th>
+                <th>Czs zakończenia</th>
+                <th>Zmiana</th>
+                <th>Pracuje</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in objects)
+            {
+                <tr>
+                    <td>@e.Employee.FullName()</td>
+                    <td>@e.StartTime</td>
+                    <td>@e.EndTime</td>
+                    <td>@e.WorkHourTyp.Name</td>
+                    <td>@e.IsWorking</td>
+                    <td><input type="button" value="Edytuj" class="btn btn-primary" @onclick="()=>EditObject(e)" data-bs-toggle="modal" data-bs-target="#myModal" /></td>
+                </tr>
+            }
+        </tbody>
+
+
+
+
+    </table>
+}
+else
+{
+    <SurveyPrompt Title="Brak elementów"></SurveyPrompt>
+}
+
+<!-- The Modal -->
+<div class="modal fade" id="myModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">@selected?.Employee?.FullName()</h4>
+                <button type="button" class="btn close oi oi-circle-x" data-bs-dismiss="modal"></button>
+            </div>
+            @if (selected != null)
+            {
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div class="form-floating mb-3 mt-3">
+                        <input type="text" class="form-control" id="Nazwa" placeholder="Nazwa" name="Nazwa" @bind="selected.Name">
+                        <label for="Nazwa">Nazwa</label>
+                    </div>
+
+                    <div class="form-floating mb-3 mt-3">
+                        <input type="datetime-local" class="form-control" id="Nazwa" placeholder="Nazwa" name="Nazwa" @bind="selected.StartTime">
+                        <label for="Nazwa">Czas rozpoczęcia</label>
+                    </div>
+                    <div class="form-floating mb-3 mt-3">
+                        <input type="datetime-local" class="form-control" id="Nazwa" placeholder="Nazwa" name="Nazwa" @bind="selected.EndTime">
+                        <label for="Nazwa">Czas zakończenia</label>
+                    </div>
+
+
+                    <div class="form-floating mb-3 mt-3">
+                        <select class="form-control" value="@selected.WorkHourTyp.Id" @onchange="ChangeTyp">
+                            @foreach (var t in WorkHourType.GetWorkHourTypes())
+                            {
+                                <option value="@t.Id">@t.Name</option>
+                            }
+                        </select>
+
+                        @code {
+                        void ChangeTyp(ChangeEventArgs e)
+                        {
+                            selected.WorkHourTyp =WorkHourType.GetWorkHourType(int.Parse(e.Value.ToString()));
+                        }
+                    }
+
+                    <label for="Nazwa">Zmiana pracy</label>
+                </div>            
+
+            </div>
+
+
+            }
+            <!-- Modal footer -->
+            <div class="modal-footer" style="transition:all 2s;">
+                @if (ShowConfirm)
+                {
+                    <button type="button" class="btn btn-success" @onclick="()=>ShowConfirm=false">Anuluj</button>
+                    <button type="button" class="btn btn-danger" @onclick="RemoveEmpl" data-bs-dismiss="modal">Potwierdzam usunięcie</button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" @onclick="()=>ShowConfirm=true">Usuń</button>
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal" @onclick="Save">Zapisz</button>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    List<int> years { get; set; }
+    int YearSelected { get; set; } = DateTime.Now.Year;
+    List<int> months { get; set; }
+    int MonthSelected { get; set; } = DateTime.Now.Month;
+    ZoneType SelectedZone { get; set; }
+
+
+
+    protected override void OnInitialized()
+    {
+        SelectedZone = cois.Zone;
+
+        years = new List<int>();
+        int yn = DateTime.Now.Year;
+        int pn = yn - 3;
+
+        for (int i = 0; i < 4; i++)
+        {
+            years.Add(pn);
+            pn++;
+        }
+
+
+        months = new List<int>();
+        for (int i = 0; i < 12; i++)
+        {
+            months.Add(i + 1);
+        }
+
+        Bind();
+    }
+    void ChangeYear(ChangeEventArgs e)
+    {
+        YearSelected = int.Parse(e.Value.ToString());
+    }
+    void ChangeMonth(ChangeEventArgs e)
+    {
+        MonthSelected = int.Parse(e.Value.ToString());
+    }
+    void ZoneChange(int zoneid)
+    {
+        SelectedZone = ZoneType.GetZoneById(zoneid);
+    }
+
+
+    int selZoneId { get; set; }
+
+    void selZone(int id)
+    {
+        selZoneId = id;
+        Bind();
+    }
+
+    List<CrewModel> objects { get; set; }
+
+    CrewModel selected { get; set; }
+
+
+    bool ShowConfirm { get; set; }
+
+
+
+    void Add()
+    {
+        selected = new CrewModel();
+        selected.Zone = SelectedZone;
+        selected.WorkHourTyp = WorkHourType.GetWorkHourTypes().First();
+    }
+    void RemoveEmpl()
+    {
+        selected.Delete();
+        Bind();
+        ShowConfirm = false;
+    }
+
+
+
+    void Save()
+    {
+        selected.Save();
+        selected = null;
+        Bind();
+    }
+
+    void Bind()
+    {
+        objects = CrewModel.GetCrewModels(YearSelected, MonthSelected, SelectedZone.Id);
+    }
+
+    void EditObject(CrewModel em)
+    {
+        selected = em;
+    }
+
+}

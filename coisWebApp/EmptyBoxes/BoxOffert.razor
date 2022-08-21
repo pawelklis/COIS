@@ -1,0 +1,133 @@
+﻿
+@inject ProgramInstance cois
+
+@if (!selfOfferts)
+{
+}
+
+
+<div style="font-size:small; border:1px solid silver;padding:3px;margin:3px">
+        <table class="table table-hover table-sm">
+        <thead class="bg-dark text-white sticky-top">
+            <tr>
+                <th>Data</th>
+                <th>Jednostka</th>
+                <th>Użytkownik</th>
+                <th>Komentarz</th>
+                <th>Oferowana ilość</th>
+                @if (offert.Status != 1)
+                {
+                    <th>Zaakceptowana ilość</th>
+                    <th>Komentarz zatwierdzającego</th>
+                    <th>Zatwierdzający</th>
+                    <th>Status</th>
+                }
+                else
+                {
+                    <th></th>
+                }
+
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@offert.AddTime</td>
+                <td>@offert.Orgunit().Name</td>
+                <td>@offert.User.Login</td>
+                <td>@offert.Comment</td>
+                <td>@offert.Amount</td>
+                @if (offert.Status != 1)
+                {
+                    <td>@offert.AcceptedAmount</td>
+                    <td>@offert.ActiontComment</td>
+                    <td>@offert.ActiontUser.Login</td>
+                    <td>@offert.StatusString()</td>
+                }
+                else
+                {
+                    @if (selfOfferts)
+                    {
+                        <td><input type="button" class="btn btn-primary" value="Akcja" @onclick="()=>showEdit=true"/></td>                           
+                    }                
+                }
+
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+@if (showEdit)
+{
+    <div class="modal" tabindex="-1" style="display:block;">
+        <div class="modal-dialog" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Akceptacja oferty</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showEdit=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+                    <div>
+                    <label>Akceptowana ilość</label>
+                    <input class="form-control" type="number" min="1" max="99999" @bind="@amount"></input>  
+                    </div>
+
+                    <div>
+                    <label>Komentarz</label>
+                    <textarea class="form-control" @bind="@comment"></textarea>   
+                    </div>
+           
+
+       
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showEdit=false">Anuluj</button>
+                    @if (amount <= advert.EnableAmmount() && amount<=offert.Amount)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="Accept">Zaakceptuj</button>                        
+                    }
+                    <button type="button" class="btn btn-warning" @onclick="Cancel">Odrzuć</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public EmptyBoxOffert offert{ get; set; }
+    [Parameter]
+    public EmptyBoxAdvert advert{ get; set; }
+    [Parameter]
+    public bool selfOfferts{ get; set; }
+    [Parameter]
+    public EventCallback NeedRefresh{ get; set; }
+
+    bool showEdit;
+    bool showNew;
+
+    string comment;
+    int amount;
+
+    protected override void OnInitialized()
+    {
+        amount = offert.Amount;
+    }
+
+    void Accept()
+    {
+        offert.Accept(cois.User, comment, amount);
+        showEdit = false;
+        NeedRefresh.InvokeAsync();
+    }
+
+    void Cancel()
+    {
+        offert.Cancel(cois.User, comment);
+        showEdit = false;
+        NeedRefresh.InvokeAsync();
+    }
+
+
+
+}

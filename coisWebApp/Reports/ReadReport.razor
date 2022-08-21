@@ -1,0 +1,107 @@
+﻿@page "/readreport"
+@using Append.Blazor.Printing
+@inject IJSRuntime JSRuntime
+@inject ProgramInstance cois
+@inject NavigationManager navManager
+@inject  IPrintingService PrintingService
+
+<h3>Znajdź raport</h3>
+<div class="input-group">
+<input type="date" class="form-control" value="@date.ToString("yyyy-MM-dd")" @oninput="GetReports" />
+<select class="form-control" value="@ZoneID" @onchange="ChangeZone">
+    @foreach (var zone in ZoneType.GetZoneByOrgUnitId(cois.OrgUnit.Id))
+    {
+        <option value="@zone.Id">@zone.Name</option>
+    }
+</select>
+<input type="text" class="form-control" placeholder="Szukana fraza (nie uwzględnia strefy i daty)" value="@phrase"  @oninput="GetReportsF"/>
+</div>
+
+
+@if (reports != null)
+{
+    <table class="table table-hover table-sm">
+        <thead class="bg-dark text-white sticky-top">
+            <tr>
+                <th>Numer</th>
+                <th>Strefa</th>
+                <th>Czas rozpoczęcia</th>
+                <th>Czas zakończenia</th>
+                <th>Nazwa</th>
+                <th>Zmiana</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in reports)
+            {
+                <tr>
+                    <td> @r.Number</td>
+                    <td>@r.Zone.Name</td>
+                    <td>   @r.DateStart</td>
+                    <td>   @r.DateEnd</td>
+                    <td>   @r.Name</td>
+                    <td>   @r.WorkShift.Name</td>
+                    <td>   <input type="button" style="float:right;" class="btn btn-primary" value="Otwórz" @onclick="()=>Print(r)"></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <label>Nie znaloziono raportów.</label>
+}
+
+
+@code {
+    DateTime date;
+
+    List<ReportType> reports;
+    int ZoneID;
+    string phrase;
+
+    protected override void OnInitialized()
+    {
+        ZoneID = cois.Zone.Id;
+        date = DateTime.Now;
+        LoadReports();
+    }
+
+    void GetReports(ChangeEventArgs e)
+    {
+        date = DateTime.Parse(e.Value.ToString());
+        LoadReports();
+    }
+    void GetReportsF(ChangeEventArgs e)
+    {
+        phrase = e.Value.ToString();
+        LoadReports();
+    }
+
+    void LoadReports()
+    {        
+        if (!string.IsNullOrEmpty( phrase))
+        {
+            reports = ReportType.GetReports(cois.OrgUnit.Id,phrase);
+        }
+        else
+        {
+            reports = ReportType.GetReports(date,ZoneID);
+        }
+    }
+
+    void ChangeZone(ChangeEventArgs e)
+    {
+        ZoneID = Convert.ToInt32(e.Value.ToString());
+        LoadReports();
+    }
+
+    void Print(ReportType report)
+    {
+        string filename = report.PrintReport();
+        PrintingService.Print(filename);
+        string url = filename.Replace("wwwroot/", "");
+        JSRuntime.InvokeAsync<object>("open", url , "_blank");
+    }
+}

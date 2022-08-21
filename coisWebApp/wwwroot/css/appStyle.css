@@ -1,0 +1,71 @@
+﻿
+
+.centerOnscreen{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50% , -50%);
+}
+
+
+.crewItemStyle{
+    cursor:pointer;
+    border:1px solid silver;
+    border-radius:10px;
+    margin:5px;
+    padding:5px;
+    vertical-align:middle;
+    
+}
+    .crewItemStyle:hover{
+        background-color:gainsboro;
+    }
+
+.selectedcrewitem{
+    border-color:red;
+}
+
+.frame{
+    border: 1px solid silver;
+    border-radius:10px;
+    margin:5px;
+    padding:5px;
+}
+
+.checkbox {
+    margin: 5px;
+    position: relative;
+    left: 5px;
+    right: 5px;
+    width: 28px;
+    height:28px
+}
+
+.shedulertable{
+    border-collapse:collapse;
+    border-width:1px;
+}
+.shedulertable td, th{
+    border:1px solid black;
+    padding:0px;
+    margin:0px;
+}
+.shedulercell{
+    font-size:smaller;
+    text-align:center;
+    vertical-align:middle;
+    width:40px;
+    height:65px;
+    cursor:pointer;
+}
+
+.shedulercell:hover{
+    background-color:silver;
+}
+
+.saturday{
+    background-color:lightblue!important;
+}
+.sunday {
+    background-color: lightcoral!important;
+}

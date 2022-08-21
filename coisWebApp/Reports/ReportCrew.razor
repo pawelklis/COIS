@@ -1,0 +1,385 @@
+﻿@inject ProgramInstance cois
+
+<input type="button" class="btn btn-primary" value="Dodaj" @onclick="()=>{GetEmployeesToAdd(); ShowAddEmployeesForm();}" />
+
+<div class="row">
+    <div class="col" style="height:80vh;overflow:auto;">
+
+        <div class="accordion" id="accordiontime">
+            @if (WorkIntervals != null)
+            {
+                @for (int i = 0; i < WorkIntervals.Count; i++)
+                {
+                    string id = "collapse" + i;
+                    string hashid = "#" + id;
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="@hashid" aria-expanded="true" aria-controls="@id">
+                                @WorkIntervals[i].Item1.ToShortTimeString() @WorkIntervals[i].Item2.ToShortTimeString() [@cois.report.Crew.Items.Where(x => x.StartTime == WorkIntervals[i].Item1 && x.EndTime == WorkIntervals[i].Item2).Count()]
+                            </button>
+                        </h2>
+                        <div id="@id" class="accordion-collapse collapse" aria-labelledby="heading @id" data-bs-parent="#accordiontime">
+                            <div class="accordion-body">
+                                @foreach (var item in cois.report.Crew.Items.Where(x => x.StartTime == WorkIntervals[i].Item1 && x.EndTime == WorkIntervals[i].Item2).OrderBy(x => x.Employee.FullName()))
+                                {
+                                    <ReportCrewCard item=@item Click="()=>SelectItem(item)"></ReportCrewCard>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#id" aria-expanded="true" aria-controls="id">
+                        <h5>Pracownicy oddelegowani [@cois.report.CrewDelegatedFromOtherReports().Count]</h5>
+                    </button>
+                </h2>
+                <div id="id" class="accordion-collapse collapse" aria-labelledby="heading id" data-bs-parent="#accordiontime">
+                    <div class="accordion-body">
+                        @foreach (var item in cois.report.CrewDelegatedFromOtherReports())
+                        {
+                            <ReportCrewCard item=@item Click="()=>SelectItem(item)"></ReportCrewCard>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        @if (selectedItems.Count > 0)
+        {
+            <button type="button" class="btn close oi oi-circle-x" style="float:right;" @onclick="()=>{selectedItems.ForEach(x=>x.Selected=false); selectedItems.Clear();}"></button>
+        }
+        @if (selectedItems.Count > 1)
+        {
+            string title ="";
+            @foreach(var o in selectedItems)
+            {
+                title += o.Employee.FullName() + "\n";
+            }
+            <h5 title="@title">Modyfikacja @selectedItems.Count pracowników</h5>
+        }
+        @if (selectedItems.Count == 1)
+        {
+
+            <h5>@selectedItems.First().Employee.FullName()</h5>
+
+@*            <div class="frame">
+                <CrewTimeLaps crew="@selectedItems.First()"></CrewTimeLaps>
+            </div>*@
+
+            <div class="frame">
+                <h6>Sprzęt</h6>
+                <div class="input-group w100">
+                    @if (selectedItems.First().Employee.DevicesToPassAsync().Find(x => x.GetType() == typeof(ScannerType)) == null)
+                    {
+                        <input type="button" class="btn btn-primary form-control" value="Wydaj skaner" @onclick="()=>ShowDeviceGet(selectedItems.First().Employee, DeviceEvidence.deviceclass.Skaner)">
+                    }
+
+                    <input type="button" class="btn btn-secondary form-control" value="Wydaj rekwizyt" @onclick="()=>ShowDeviceGet(selectedItems.First().Employee, DeviceEvidence.deviceclass.Rekwizyt)">
+
+
+                    <input type="button" class="btn btn-warning form-control" value="Wydaj elektrowózek" @onclick="()=>ShowDeviceGet(selectedItems.First().Employee, DeviceEvidence.deviceclass.Elektrowózek)">
+                </div>
+
+
+
+                @foreach(var device in selectedItems.First().Employee.DevicesToPassAsync())
+                {
+                    <div class="input-group w100">
+                        <label class="form-control">@device.Device().Name</label>
+                        @if(device.DeviceClass== DeviceEvidence.deviceclass.Skaner)
+                        {
+                            <input type="button" class="btn btn-primary form-control" value="Zdaj" @onclick="()=>ShowDevicePass(selectedItems.First().Employee,device)">
+                        }
+                        @if(device.DeviceClass== DeviceEvidence.deviceclass.Rekwizyt)
+                        {
+                            <input type="button" class="btn btn-secondary form-control" value="Zdaj" @onclick="()=>ShowDevicePass(selectedItems.First().Employee,device)">
+                        }
+                        @if(device.DeviceClass== DeviceEvidence.deviceclass.Elektrowózek)
+                        {
+                            <input type="button" class="btn btn-warning form-control" value="Zdaj" @onclick="()=>ShowDevicePass(selectedItems.First().Employee,device)">
+                        }
+                    </div>
+                }
+
+            </div>
+
+
+        }
+        @if (selectedItems.Count > 0)
+        {
+
+            <div class="frame">
+                <h5>Czas pracy i obecność</h5>
+                <div class="input-group">
+                <input class="form-control" type="datetime-local" title="Rozpoczęcie pracy" value="@selectedItems.First().StartTime.ToString(Format)" @onchange="ChangeStartTime">
+                <input class="form-control" type="datetime-local" title="Zakończenie pracy"  value="@selectedItems.First().EndTime.ToString(Format)" @onchange="ChangeEndTime">
+                    @if (selectedItems.First().Present)
+                    {
+                        <input type="checkbox" title="Obecność" class="checkbox" value="@selectedItems.First().Present" checked @onchange="ChangePresent">
+                    }
+                    else
+                    {
+                        <input type="checkbox" title="Obecność" class="checkbox"  value="@selectedItems.First().Present" unchecked @onchange="ChangePresent">
+                    }
+                </div>
+            </div>
+            <ReportCrewActivities items=@selectedItems></ReportCrewActivities>
+
+            @if (selectedItems.Any(x => x.Employee.ActiveDelegation() == null))
+            {
+                <StartDelegate employees=@SelectedEmployeesToDelegate() AfterDelegate="()=>Bind()"></StartDelegate>
+            }
+            @if (SelectedEmployeesInDelegate().Count > 0)
+            {
+                <EndDelegate employees=@SelectedEmployeesInDelegate() AfterDelegate="()=>Bind()"></EndDelegate>
+            }
+            
+            <input type="button" class="btn btn-danger" value="Usuń pracownika" style="float:right;margin:10px;" @onclick="DeleteCrew">
+        }
+    </div>
+</div>
+
+
+@if (ShowAddEmployees)
+{
+    <div class="modal" style="opacity:1;display:initial;" id="myModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="btn close oi oi-circle-x" data-bs-dismiss="modal" @onclick="()=>ShowAddEmployees=false"></button>
+                </div>
+                <div class="modal-body" style="height:400px;overflow:auto;">
+                    <div class="input-group">
+                        <select class="form-control" value="@ZoneId" @onchange="ChangeZone">
+                            @foreach (var z in ZoneType.GetZoneByOrgUnitId(cois.OrgUnit.Id))
+                            {
+                                <option value="@z.Id">@z.Name</option>
+                            }
+                        </select>
+                    </div>
+                    @foreach (var em in employeesToAdd)
+                    {
+                        if (selectedEmployeesToAdd.Find(x => x.Id == em.Id) != null)
+                        {
+                            <button type="button" class="btn btn-primary small" style="margin:2px;" @onclick="()=>SelUnselEm(em)">@em.FullName()</button>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-secondary small" style="margin:2px;" @onclick="()=>SelUnselEm(em)">@em.FullName()</button>
+                        }
+                    }
+                </div>
+                <div class="modal-footer" style="transition:all 2s;">
+                    <button type="button" class="btn btn-secondary" @onclick="()=>ShowAddEmployees=false">Anuluj</button>
+                    @if (selectedEmployeesToAdd.Count > 0)
+                    {
+                        <button type="button" class="btn btn-success" data-bs-dismiss="modal" @onclick="AddCrew">Dodaj</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+}
+@if (showdeviceGet)
+{
+
+    <coisWebApp.Devices.GetDevice selectedEmployeeParameter="@deviceemployee"
+                              deviceclass="@selecteddeviceclass" OnSaved="()=>showdeviceGet=false" OnCancel="()=>showdeviceGet=false">
+    </coisWebApp.Devices.GetDevice>
+
+}
+@if (showdevicePass)
+{
+
+    <coisWebApp.Devices.PassDevice employee="@deviceemployee" deviceEvidence="@DeviceEvidence"
+                               OnSaved="()=>showdevicePass=false" OnCancel="()=>showdevicePass=false">
+    </coisWebApp.Devices.PassDevice>
+
+}
+
+@code {
+    List<Tuple<DateTime, DateTime>> WorkIntervals;
+    List<CrewItem> selectedItems;
+    public string Format { get; set; } = "yyyy-MM-ddTHH:mm";
+    bool ShowAddEmployees;
+    bool showdeviceGet;
+    bool showdevicePass;
+    int ZoneId;
+    List<EmployeeType> employeesToAdd;
+    List<EmployeeType> selectedEmployeesToAdd;
+    EmployeeType deviceemployee;
+    DeviceEvidence.deviceclass selecteddeviceclass;
+    DeviceEvidence DeviceEvidence;
+
+    protected override void OnInitialized()
+    {
+        cois.report.OnNewDelegationStart += OnReportDelegateStart;
+        cois.report.OnNewDelegationEnd += OnReportDelegateEnd;
+
+        ZoneId = cois.Zone.Id;
+        employeesToAdd = new List<EmployeeType>();
+        selectedEmployeesToAdd = new List<EmployeeType>();
+        selectedItems = new List<CrewItem>();
+        cois.report.Crew.Items.All(x => x.Selected = false);
+        Bind();
+    }
+
+    void OnReportDelegateStart(object? sender, DelegationType e)
+    {
+        SelectedEmployeesInDelegate();
+        this.InvokeAsync(() => this.StateHasChanged());
+
+    }
+    void OnReportDelegateEnd(object? sender, DelegationType e)
+    {
+        CrewItem citem = selectedItems.Find(x => x.Employee.Id == e.Employee.Id);
+        if (citem != null)
+            selectedItems.Remove(citem);
+
+        SelectedEmployeesInDelegate();
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+
+    List<EmployeeType> SelectedEmployeesToDelegate()
+    {
+        List<EmployeeType> l = new List<EmployeeType>();
+        List<EmployeeType> enableList = cois.report.EnableToDelegateEmployees();
+
+        foreach (var item in selectedItems)
+        {
+            if (enableList.Find(x => x.Id == item.Employee.Id) != null)
+                l.Add(item.Employee);
+        }
+        return l;
+    }
+    List<EmployeeType> SelectedEmployeesInDelegate()
+    {
+        List<EmployeeType> l = new List<EmployeeType>();
+        selectedItems.ForEach(x =>
+            {
+                if (x.Employee.ActiveDelegation() != null)
+                    l.Add(x.Employee);
+            });
+
+        return l;
+    }
+
+    void SetWorkIntervals()
+    {
+        WorkIntervals = (from o in cois.report.Crew.Items
+                         group o by new { o.StartTime, o.EndTime }
+                         into oo
+                         select new Tuple<DateTime, DateTime>(oo.Key.StartTime, oo.Key.EndTime)).ToList().Distinct().OrderBy(x => x.Item1).ThenBy(x => x.Item2).ToList();
+    }
+
+    public void Bind()
+    {
+        SetWorkIntervals();
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+
+    void DeleteCrew()
+    {
+        foreach (var item in selectedItems)
+        {
+            cois.report.Crew.Items.Remove(item);
+        }
+        selectedItems.Clear();
+
+    }
+
+    void SelectItem(CrewItem item)
+    {
+        if (selectedItems.Find(x => x.Guid == item.Guid) != null)
+        {
+            item.Selected = false;
+            selectedItems.Remove(item);
+        }
+        else
+        {
+            item.Selected = true;
+            selectedItems.Add(item);
+        }
+
+    }
+
+    void ShowAddEmployeesForm()
+    {
+        ShowAddEmployees = true;
+    }
+    void ChangeZone(ChangeEventArgs e)
+    {
+        ZoneId = Convert.ToInt32(e.Value.ToString());
+        GetEmployeesToAdd();
+    }
+    void GetEmployeesToAdd()
+    {
+        employeesToAdd = EmployeeType.GetEmployees(ZoneId).Except(cois.report.Crew.Employees().ToList()).ToList();
+    }
+    void SelUnselEm(EmployeeType em)
+    {
+        if (selectedEmployeesToAdd.Find(x => x.Id == em.Id) == null)
+            selectedEmployeesToAdd.Add(em);
+        else
+            selectedEmployeesToAdd.Remove(em);
+    }
+    void AddCrew()
+    {
+        foreach (var em in selectedEmployeesToAdd)
+        {
+            CrewItem i = new CrewItem(cois.report.DateStart, cois.report.DateEnd, em);
+            cois.report.Crew.Items.Insert(0, i);
+        }
+        cois.report.Save();
+        selectedEmployeesToAdd.Clear();
+        ShowAddEmployees = false;
+        Bind();
+    }
+
+    void ChangeStartTime(ChangeEventArgs e)
+    {
+        DateTime time = DateTime.Parse(e.Value.ToString());
+        selectedItems.ForEach(x => x.StartTime = time);
+        Bind();
+    }
+    void ChangeEndTime(ChangeEventArgs e)
+    {
+        DateTime time = DateTime.Parse(e.Value.ToString());
+        selectedItems.ForEach(x => x.EndTime = time);
+        Bind();
+    }
+    void ChangePresent(ChangeEventArgs e)
+    {
+        bool present = bool.Parse(e.Value.ToString());
+        selectedItems.ForEach(x => x.Present = present);
+        Bind();
+    }
+    string isPresent(CrewItem item)
+    {
+        if (item.Present)
+            return "checked";
+        else
+            return "unchecked";
+    }
+
+
+    void ShowDeviceGet(EmployeeType employee, DeviceEvidence.deviceclass deviceclass)
+    {
+        deviceemployee=employee;
+        selecteddeviceclass=deviceclass;
+        showdeviceGet = true;
+    }
+    void ShowDevicePass(EmployeeType employee, DeviceEvidence deviceEvidence)
+    {
+        deviceemployee=employee;
+        DeviceEvidence=deviceEvidence;
+        showdevicePass = true;
+    }
+
+}

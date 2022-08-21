@@ -1,0 +1,56 @@
+﻿
+
+<div class="accordion" id="accordiontime">
+@for(int x=0;x< item.CategoriesList().Count;x++)
+{
+        string category = item.CategoriesList()[x];
+        <h5>@category</h5>
+        @for (int i = 0; i < item.FieldsByCategory(category).Count; i++)
+        {
+            IReportField field = item.FieldsByCategory(category)[i];
+            string id = "collapse" + i +x;
+            string hashid = "#" + id;
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="@hashid" aria-expanded="true" aria-controls="@id">
+                         @field.Name
+                    </button>
+                </h2>
+                <div id="@id" class="accordion-collapse collapse" aria-labelledby="heading @id" data-bs-parent="#accordiontime">
+                    <div class="accordion-body">
+
+                        @if (field.GetType() == typeof(ReportField_Bool))
+                        {
+                            <coisWebApp.ReportFields.ReportFieldBool _field=@field></coisWebApp.ReportFields.ReportFieldBool>
+                        }
+                        @if (field.GetType() == typeof(ReportField_List))
+                        {
+                            <coisWebApp.ReportFields.ReportFieldList _field=@field></coisWebApp.ReportFields.ReportFieldList>
+                        }
+                        @if (field.GetType() == typeof(ReportField_Number))
+                        {
+                            <coisWebApp.ReportFields.ReportFieldNumber _field=@field></coisWebApp.ReportFields.ReportFieldNumber>
+                        }
+                        @if (field.GetType() == typeof(ReportField_Text))
+                        {
+                            <coisWebApp.ReportFields.ReportFieldText _field=@field></coisWebApp.ReportFields.ReportFieldText>
+                        }
+                        @if (field.GetType() == typeof(ReportField_Table))
+                        {
+                            <coisWebApp.ReportFields.ReportFieldTable _field=@field></coisWebApp.ReportFields.ReportFieldTable>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        }
+}
+</div>
+
+@code {
+    [Parameter]
+    public ReportItem item { get; set; }
+
+
+
+}

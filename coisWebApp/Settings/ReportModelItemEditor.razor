@@ -1,0 +1,211 @@
+﻿@if (showFields == false)
+{
+    <input type="button" class="btn btn-success" @onclick="Add" value="Dodaj" />
+    @if (objects.Count > 0)
+    {
+        <table class="table  table-hover table-sm">
+            <thead class="bg-dark text-white sticky-top">
+                <tr>
+                    @foreach (var p in objects.First().GetType().GetProperties())
+                    {
+                        @if (p.CustomAttributes.Where(x => x.AttributeType.Name == "FrontEndAttribute").Count() > 0)
+                        {
+                            FrontEndAttribute fa = (FrontEndAttribute)p.GetCustomAttributes(typeof(FrontEndAttribute), true).First();
+                            @if (fa != null)
+                            {
+                                @if (fa.Show)
+                                {
+                                    <th> @fa.Name </th>
+                                }
+                            }
+                        }
+                    }
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in objects)
+                {
+                    <tr>
+                        @foreach (var p in objects.First().GetType().GetProperties())
+                        {
+                            @if (p.CustomAttributes.Where(x => x.AttributeType.Name == "FrontEndAttribute").Count() > 0)
+                            {
+                                FrontEndAttribute fa = (FrontEndAttribute)p.GetCustomAttributes(typeof(FrontEndAttribute), true).First();
+                                @if (fa != null)
+                                {
+                                    @if (fa.Show)
+                                    {
+                                        <td> @p.GetValue(o) </td>
+                                    }
+                                }
+                            }
+                        }
+                        <td><input type="button" @onclick="()=>Select(o)" class="btn btn-secondary" value="Edytuj"></td>
+
+                        <td><input type="button" @onclick="()=>ShowItemEditor(o)" class="btn btn-secondary" value="Edytuj pola"></td>
+
+                        <td><input type="button" @onclick="()=>{selectedObject=o;confirmDelete=true;}" class="btn btn-danger" value="Usuń"></td>
+                    </tr>
+
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (showModal)
+    {
+        <div class="modal" tabindex="-1" style="display:block;">
+            <div class="modal-dialog" style="display:block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@selectedObject.Name</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showModal=false"></button>
+                    </div>
+                    <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                        <label>Nazwa</label>
+                        <input class="form-control" type="text" @bind="selectedObject.Name">
+
+                        <label>Zmiany pracy</label>
+                        <div style="max-height:250px;overflow:auto;">
+                            @foreach (var z in WorkShift.GetWorkShifts(model.EnableZones.ToArray()))
+                            {
+                                <div class="activeLabel">
+                                    @if (selectedObject.EnabledAdWorkshifts.Find(x => x.Id == z.Id) != null)
+                                    {
+                                        <input type="checkbox" checked value="@z.Id" onclick="return false">
+                                    }
+                                    else
+                                    {
+                                        <input type="checkbox" value="@z.Id" onclick="return false">
+                                    }
+                                    <label @onclick="()=>ChangeWorkShift(z)">@z.Zone.Name @z.Name</label>
+
+                                </div>
+                            }
+                        </div>
+
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showModal=false">Zamknij</button>
+                        <button type="button" class="btn btn-primary" @onclick="Save">Zapisz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (confirmDelete)
+    {
+        <div class="modal" tabindex="-1" style="display:block;opacity:inherit;">
+            <div class="modal-dialog" style="display:block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Usuwanie obiektu</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>confirmDelete=false"></button>
+                    </div>
+                    <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                        <label>Czy potwierdzasz trwałe usunięcie obiektu?</label>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>confirmDelete=false">Anuluj</button>
+                        <button type="button" class="btn btn-danger" @onclick="Delete">Usuń</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <button type="button" class="btn-close"  aria-label="Close" @onclick="()=>showFields=false"></button>
+    <label>   Pola @selectedObject.Name</label> 
+    <ReportModelItemFieldsEditor item=@selectedObject model=@model></ReportModelItemFieldsEditor>
+}
+
+
+
+
+
+
+@code {
+    [Parameter]
+    public ReportModel model { get; set; }
+    bool showModal;
+    bool confirmDelete;
+    bool showFields;
+    List<ReportModelItem> objects;
+
+    ReportModelItem selectedObject;
+
+    protected override void OnInitialized()
+    {
+        Refresh();
+        base.OnInitialized();
+    }
+
+    void Refresh()
+    {
+        objects = model.Items;
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+
+    void Add()
+    {
+        selectedObject = new ReportModelItem();
+        model.Items.Add(selectedObject);
+        showModal = true;
+    }
+
+    void Save()
+    {
+        model.Save();
+        showModal = false;
+        Refresh();
+    }
+
+    void Select(ReportModelItem o)
+    {
+        selectedObject = o;
+        showModal = true;
+    }
+
+    void Delete()
+    {
+        model.Items.Remove(selectedObject);
+        Refresh();
+        confirmDelete = false;
+    }
+
+    void ChangeWorkShift(WorkShift z)
+    {
+
+        if (selectedObject.EnabledAdWorkshifts.Find(x => x.Id == z.Id) != null)
+        {
+            for (int i = 0; i < selectedObject.EnabledAdWorkshifts.Count; i++)
+            {
+                if (selectedObject.EnabledAdWorkshifts[i].Id == z.Id)
+                {
+                    selectedObject.EnabledAdWorkshifts.RemoveAt(i);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            selectedObject.EnabledAdWorkshifts.Add(z);
+        }
+    }
+
+    void ShowItemEditor(ReportModelItem o)
+    {
+        selectedObject = o;
+        showFields = true;
+    }
+}

@@ -1,0 +1,208 @@
+﻿@page "/bateries"
+@inject ProgramInstance cois
+
+
+<h3>Baterie</h3>
+<input type="button" class="btn btn-success" value="Dodaj" @onclick="Add" data-bs-toggle="modal" data-bs-target="#myModal" />
+
+
+
+@if (objects != null || objects?.Count > 0)
+{
+    <table class="table table-hover table-sm">
+                <thead class="bg-dark text-white sticky-top">
+          <tr>
+            <th>Nazwa</th>
+            <th>Kod kreskowy</th>
+            <th>Typ</th>
+            <th>Opis</th>
+            <th>Numer seryjny</th>
+            <th>Kondycja</th>
+            <th></th>
+        </tr>      
+        </thead>
+        <tbody>
+        @foreach (var e in objects)
+        {
+            <tr>
+                <td>@e.Name</td>
+                <td>@e.BarCode</td>
+                <td>@e.GetDeviceType().Name</td>
+                <td>@e.Description</td>
+                <td>@e.BatNumber</td>
+                <td>@e.Condition.Name</td>
+                <td><input type="button" value="Edytuj" class="btn btn-primary" @onclick="()=>EditObject(e)" data-bs-toggle="modal" data-bs-target="#myModal" /></td>
+            </tr>
+        }
+        </tbody>
+
+
+
+
+    </table>
+}
+else
+{
+    <SurveyPrompt Title="Brak elementów"></SurveyPrompt>
+}
+
+<!-- The Modal -->
+<div class="modal fade" id="myModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">@selected?.Name</h4>
+                <button type="button" class="btn close oi oi-circle-x" data-bs-dismiss="modal"></button>
+            </div>
+            @if (selected != null)
+            {
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div class="form-floating mb-3 mt-3">
+                        <input type="text" class="form-control" id="Nazwa" placeholder="Nazwa" name="Nazwa" @bind="selected.Name">
+                        <label for="Nazwa">Nazwa</label>
+                    </div>
+
+                    <div class="form-floating mb-3 mt-3">
+                        <input type="text" class="form-control" id="Nazwa" placeholder="Nazwa" name="Nazwa" @bind="selected.BarCode">
+                        <label for="Nazwa">kod kreskowy</label>
+                    </div>
+                    <div class="form-floating mb-3 mt-3">
+                        <select class="form-control" value="@selected.DeviceTypeId" @onchange="ChangeTyp">
+                            @foreach (var t in deviceTypes)
+                            {
+                                <option value="@t.Id">@t.Name</option>
+                            }
+                        </select>
+
+                        @code{
+                            List<DeviceType> deviceTypes { get; set; }
+                            void GetDeviceTypes()
+                            {
+                                deviceTypes = DeviceType.GetDeviceTypes( DeviceEvidence.deviceclass.Bateria);
+                            }
+                            void ChangeTyp(ChangeEventArgs e)
+                            {
+                                selected.DeviceTypeId = int.Parse(e.Value.ToString());
+                            }
+                        }
+
+                        <label for="Nazwa">Typ urządzenia</label>
+                    </div>
+                    <div class="form-floating mb-3 mt-3">
+                        <input type="text" class="form-control" id="Nazwa" placeholder="Nazwa" name="Nazwa" @bind="selected.Description">
+                        <label for="Nazwa">Opis</label>
+                    </div>
+                    <div class="form-floating mb-3 mt-3">
+                        <input type="text" class="form-control" id="Nazwa" placeholder="Nazwa" name="Nazwa" @bind="selected.BatNumber">
+                        <label for="Nazwa">Numer seryjny</label>
+                    </div>
+                    <div class="form-floating mb-3 mt-3">
+                        <select class="form-control" value="@selected.Condition.Id" @onchange="ChangeCondition">
+                            @foreach (var t in deviceConditions)
+                            {
+                                <option value="@t.Id">@t.Name</option>
+                            }
+                        </select>
+
+                        @code{
+                            List<DeviceCondition> deviceConditions { get; set; }
+                            void GetConditions()
+                            {
+                                deviceConditions = DeviceCondition.GetDeviceConditions();
+                            }
+                            void ChangeCondition(ChangeEventArgs e)
+                            {
+                                selected.Condition = DeviceCondition.GetDeviceCondition(int.Parse(e.Value.ToString()));
+                            }
+                        }
+                        <label for="Nazwa">Kondycja</label>
+                    </div>
+
+                </div>
+
+
+            }
+            <!-- Modal footer -->
+            <div class="modal-footer" style="transition:all 2s;">
+                @if (ShowConfirm)
+                {
+                    <button type="button" class="btn btn-success" @onclick="()=>ShowConfirm=false">Anuluj</button>
+                    <button type="button" class="btn btn-danger" @onclick="RemoveEmpl" data-bs-dismiss="modal">Potwierdzam usunięcie</button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" @onclick="()=>ShowConfirm=true">Usuń</button>
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal" @onclick="Save">Zapisz</button>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@code {
+    protected override void OnInitialized()
+    {
+       
+        GetConditions();
+        GetDeviceTypes();
+        GetObjects();
+    }
+
+
+
+    int selZoneId { get; set; }
+
+    void selZone(int id)
+    {
+        selZoneId = id;
+        GetObjects();
+    }
+
+    List<BatteryType> objects { get; set; }
+
+    BatteryType selected { get; set; }
+
+
+    bool ShowConfirm { get; set; }
+
+
+
+    void Add()
+    {
+        selected = new BatteryType();
+        selected.OrgUnitId = cois.Zone.OrganizationUnit().Id;
+        selected.Condition = deviceConditions.FirstOrDefault();
+        selected.DeviceTypeId = deviceTypes.FirstOrDefault().Id;
+    }
+    void RemoveEmpl()
+    {
+        selected.Delete();
+        GetObjects();
+        ShowConfirm = false;
+    }
+
+
+
+    void Save()
+    {
+        selected.Save();
+        selected = null;
+        GetObjects();
+    }
+
+    void GetObjects()
+    {
+        objects = BatteryType.GetBatteries();
+    }
+
+    void EditObject(BatteryType em)
+    {
+        selected = em;
+    }
+
+}

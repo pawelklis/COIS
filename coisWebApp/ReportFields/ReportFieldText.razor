@@ -1,0 +1,61 @@
+﻿
+@if (cel != null)
+{
+    @if (longtext)
+    {
+                <textarea class="form-control" style="height:@cel.Height;"  @bind="cel.Value"></textarea>
+    }
+    else
+    {
+        <input type="text" class="form-control"  @bind="cel.Value">
+    }  
+}
+@if (cell != null)
+{
+    @if (longtext)
+    {
+        <textarea class="form-control" style="height:@cell.Height;"   @bind="cell.Value"></textarea>
+    }
+    else
+    {
+        <input class="form-control"  type="text" @bind="cell.Value">
+    }  
+}
+
+@if(field!=null)
+{
+    @if (longtext)
+    {
+        <textarea  class="form-control" style="height:@field.Height;"  @bind="field.Value" ></textarea>
+    }
+    else
+    {
+        <input class="form-control" type="text" @bind="field.Value">    
+    }
+
+}
+
+
+@code {
+    [Parameter]
+    public ReportRowCell cel{ get; set; }
+    [Parameter]
+    public ReportModelRowCell cell{ get; set; }
+    [Parameter]
+    public IReportField _field{ get; set; }
+    public ReportField_Text field{ get; set; }
+    [Parameter]
+    public bool longtext{ get; set; }
+
+
+    protected override void OnInitialized()
+    {
+        if (_field != null)
+            field = (ReportField_Text)_field;
+
+        if(field!=null)
+        {
+            longtext=field.LongText;
+        }
+    }
+}

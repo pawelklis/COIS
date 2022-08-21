@@ -1,0 +1,75 @@
+﻿
+<div class="frame">
+    <h6>Czynności</h6>
+
+    <div class="input-group">
+        <input type="text" class="form-control" placeholder="Czynność" @bind="name" />
+        <input type="text"  class="form-control"  placeholder="Opis" @bind="desc"  />
+        <input type="button" class="btn btn-success" title="Dodaj" value="+" @onclick="Add" aria-hidden="true" />
+    </div>
+    <hr />
+    <div>
+        @foreach (var a in activities())
+        {
+            <div class="input-group">
+                <input type="button" class="btn btn-danger" title="Usuń" value="-" @onclick="()=>Remove(a)" aria-hidden="true" />
+                <label class="form-control">@a.Name @a.Description</label>
+                <input class="form-control" type="datetime-local" @bind="@a.Time" />
+            </div>
+        }
+    </div>
+</div>
+
+
+
+
+@code {
+    [Parameter]
+    public List<CrewItem> items { get; set; }
+
+    List<ActivityType> activities()
+    {
+        List<ActivityType> l = new List<ActivityType>();
+        foreach(var item in items){
+            foreach(var a in item.Activities)
+            {
+                if(l.Find(x=>x.Name==a.Name)==null)
+                    l.Add(a);
+            }
+        }
+        return l.OrderBy(x=>x.Name).ToList();
+    }
+
+    void Add()
+    {
+        foreach (var crew in items)
+        {
+            ActivityType na = crew.Activities.Find(x=>x.Name==name);
+            if(na==null){
+                crew.Activities.Add(new ActivityType()
+                {
+                    Name = name,
+                    Description = desc
+                });
+            }
+        }        
+
+        name = "";
+        desc = "";
+
+    }
+
+    void Remove(ActivityType a)
+    {
+        foreach(var crew in items)
+        {
+            ActivityType na = crew.Activities.Find(x=>x.Name==a.Name);
+            if(na!=null){
+                crew.Activities.Remove(na);
+            }
+        }
+    }
+
+    string name { get; set; }
+    string desc { get; set; }
+}

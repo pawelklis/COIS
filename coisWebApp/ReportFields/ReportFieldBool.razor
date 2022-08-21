@@ -1,0 +1,74 @@
+﻿@if (cel != null)
+{
+    <div class="input-group">
+        <input type="checkbox" class="checkbox" @bind="vall">
+    </div>
+
+}
+@if (cell != null)
+{
+    <div class="input-group">
+        <input type="checkbox" class="checkbox" @bind="val">
+    </div>
+
+}
+@if (field != null)
+{
+    <div class="input-group">
+        <input type="checkbox" class="checkbox" @bind="field.Value">
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public ReportModelRowCell cell{ get; set; }
+    [Parameter]
+    public ReportRowCell cel{ get; set; }
+    [Parameter]
+    public IReportField _field{ get; set; }
+
+    public ReportField_Bool field{ get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (_field != null)
+            field = (ReportField_Bool)_field;
+
+        if (cell != null)
+        {
+            try
+            {
+                bool test = bool.Parse(cell.Value);
+            }
+            catch
+            {
+                cell.Value = false.ToString();
+            }           
+        }   
+        if (cel != null)
+        {
+            try
+            {
+                bool test = bool.Parse(cel.Value);
+            }
+            catch
+            {
+                cel.Value = false.ToString();
+            }           
+        }
+
+        
+    }
+
+    bool val
+    {
+        get { return bool.Parse(cell.Value); }
+        set { cell.Value = value.ToString(); }
+    }
+    bool vall
+    {
+        get { return bool.Parse(cel.Value); }
+        set { cel.Value = value.ToString(); }
+    }
+}

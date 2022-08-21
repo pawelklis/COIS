@@ -1,0 +1,79 @@
+﻿@page "/fileupload"
+@using System.IO
+@inject IWebHostEnvironment env
+
+<div class="centerOnscreen">
+    <h3>@Message</h3>
+
+    <form @onsubmit="OnSubmit">
+        <div style="position:relative;">
+            <InputFile OnChange="OnInputFileChange" multiple  accept=".xlsx" class="btn btn-secondary"  />
+
+            <br /><br />
+            @if (selectedFiles != null)
+            {
+                @if (selectedFiles.Count > 0)
+                {
+                    <button class="btn btn-primary" type="submit" @onclick="() => ShowHide = true">Zaimportuj wybrany plik(i)</button>           
+                }            
+            }
+
+            @if (ShowHide == false)
+            {
+
+            }
+            else
+            {
+                    <h4>Przetwarzam plik...</h4>
+            }
+        </div>
+
+    </form>
+</div>
+
+
+
+@code {
+
+
+
+    [Parameter]
+    public bool ShowHide { get; set; }
+
+    [Parameter]
+    public EventCallback<List<string>> OnSubmitFiles { get; set; }
+
+    string Message = "Nie wybrano plików";
+    IReadOnlyList<IBrowserFile> selectedFiles;
+
+    List<string> uploadedFiles;
+
+    private void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFiles = e.GetMultipleFiles();
+        Message = $"{selectedFiles.Count} wybranych plik(ów)";
+        this.StateHasChanged();
+    }
+
+
+    private async void OnSubmit()
+    {
+        uploadedFiles = new List<string>();
+        if (selectedFiles == null)
+            return;
+        foreach (var file in selectedFiles)
+        {
+            Stream stream = file.OpenReadStream(999999999);
+            var path = $"{env.WebRootPath}\\upload\\{Guid.NewGuid().ToString() + Path.GetExtension(file.Name)}";
+            FileStream fs = File.Create(path);
+            await stream.CopyToAsync(fs);
+            stream.Close();
+            fs.Close();
+            uploadedFiles.Add(path);
+        }
+        Message = $"{selectedFiles.Count} plik(i) zaimportowano na serwer";
+        this.StateHasChanged();
+
+        await OnSubmitFiles.InvokeAsync(uploadedFiles);
+    }
+}

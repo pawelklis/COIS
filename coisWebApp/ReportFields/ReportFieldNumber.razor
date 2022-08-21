@@ -1,0 +1,34 @@
+﻿
+@if (cel != null)
+{
+
+  <input type="number" class="form-control"  @bind="cel.Value" style="width:140px;">
+   
+}
+@if (cell != null)
+{
+
+  <input type="number" class="form-control"  @bind="cell.Value" style="width:140px;">
+   
+}
+
+@if(field!=null)
+{
+    <input class="form-control" type="number" @bind="field.Value">
+}
+
+@code {
+    [Parameter]
+    public ReportRowCell cel{ get; set; }
+    [Parameter]
+    public ReportModelRowCell cell{ get; set; }
+    [Parameter]
+    public IReportField _field{ get; set; }
+    public ReportField_Number field{ get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (_field != null)
+            field = (ReportField_Number)_field;
+    }
+}

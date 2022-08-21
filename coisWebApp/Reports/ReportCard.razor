@@ -1,0 +1,110 @@
+﻿@inject ProgramInstance cois
+
+@inject NavigationManager navManager 
+
+<div class="col sm-6">
+    <div class="card" style="min-width:360px;max-width:360px;margin-bottom:30px;">
+        <div class="card-header">
+            <p class="card-title">@model.Name</p>
+        </div>
+        <div class="card-body" style="height:200px;">
+            <p class="card-text">@model.Description</p>
+        </div>
+        <div class="card-footer" style="height:100px;">
+            @if (model.IsOpen(cois.Zone.Id) == true)
+            {
+                //jest otwarty
+                <input type="button" class="btn btn-secondary" style="margin-top:5px;" value="Kontynuuj" @onclick="ContinueReport" />
+            }
+            else
+            {
+                <select class="form-control" value="@selectedWorkShiftID" @onchange="ChangeVal">
+                    @foreach (var w in WorkShift.GetWorkShifts(cois.Zone.Id))
+                    {
+                        <option value="@w.Id" title="@w.HoursWorkString()">@w.Name</option>
+                    }
+                </select>
+
+
+                //nie ma otwartych
+
+
+                @if (selectedWorkShiftID != 0)
+                {
+                    <input type="button" class="btn btn-primary" style="margin-top:5px;" value="Rozpocznij" @onclick="()=>GetSelectedWorkshift()" data-bs-toggle="modal" data-bs-target="#exampleModal" />
+                }
+            }
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal -->
+@if (showmodal) 
+{
+    <div class="modal" style="display:block;" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Nowy raport</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"  @onclick="() => showmodal = false"></button>
+                </div>
+                <div class="modal-body">
+                    Potwierdzasz rozpoczęcie nowego raportu dla zmiany @selectedWorkshift?.Name (@selectedWorkshift?.HoursWorkString()) ?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"  @onclick="() => showmodal = false">Anuluj</button>
+                    <button type="button" class="btn btn-primary" @onclick="StartNewReport">Rozpocznij</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+
+
+
+@code {
+    [Parameter]
+    public ReportModel model { get; set; }
+
+
+    
+
+    void ChangeVal(ChangeEventArgs e)
+    {
+        selectedWorkShiftID = int.Parse(e.Value.ToString());
+    }
+
+    void StartNewReport()
+    {
+        ReportType report = new ReportType(model, cois.Zone, selectedWorkshift, DateTime.Now,cois.User,cois);
+        report.Save();
+
+        cois.report = report;
+
+        showmodal = false;
+        navManager.NavigateTo("reporteditor");
+    }
+
+    void ContinueReport()
+    {
+        ReportType report = ReportType.GetReport(model.Id, cois.Zone.Id,false);
+        cois.report = report;
+
+        showmodal = false;
+        navManager.NavigateTo("reporteditor");
+    }
+
+    bool showmodal { get; set; }
+    int selectedWorkShiftID { get; set; }
+
+
+    WorkShift selectedWorkshift { get; set; }
+    void GetSelectedWorkshift()
+    {
+        selectedWorkshift= WorkShift.GetWorkShift(selectedWorkShiftID);
+        showmodal = true;
+    }
+}

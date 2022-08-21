@@ -1,0 +1,298 @@
+﻿@page "/emptyboxorders"
+@inject ProgramInstance cois
+
+
+<style>
+    .lsec{
+        height:200px;
+        overflow:auto;
+    }
+
+
+</style>
+
+<h6>Zamówienia do realizacji</h6>
+<div class="section lsec">
+        <table class="table table-hover table-sm">
+            <thead class="bg-dark text-white sticky-top">
+                <tr>
+                    <th>Jednostka zamawiająca</th>
+                    <th>Rodzaj OZ</th>
+                    <th>Ilość zamówiona</th>
+                    <th>Ilość realizowana</th>
+                    <th>Komentarz</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in orders)
+                {
+                    <tr>
+                        <td>@o.OrderUnit.Name</td>
+                        <td>@o.EmptyBox.Name</td>
+                        <td>@o.OrderAmount</td>
+                        <td>@o.CompletionAmount</td>
+                        <td>
+                            @foreach (var h in o.History)
+                            {
+                                <div style="font-size:smaller;">
+                                    <label>@h.Date</label>
+                                    <label>@h.Comment</label>
+                                    @if (h.User != null)
+                                    {
+                                        <label>@h.User.Login</label>
+                                    }
+                                    <label style="margin-left:5px;">@h.Status.ToString()</label>
+                                </div>
+
+                            }
+                        </td>
+                        <td><input type="button" class="btn btn-danger btn-sm" value="Odrzuć" @onclick="()=>selectObject(o,2)" /></td>
+                        <td><input type="button" class="btn btn-secondary btn-sm" value="Przyjmij do realizacji" @onclick="()=>selectObject(o,1)" /></td>
+                        <td><input type="button" class="btn btn-primary btn-sm" value="Zrealizowane" @onclick="()=>selectObject(o,3)" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>    
+</div>
+
+<h6>Zamówienia w realizacji</h6>
+<div class="section lsec">
+            <table class="table table-hover table-sm">
+            <thead class="bg-dark text-white sticky-top">
+                <tr>
+                    <th>Jednostka zamawiająca</th>
+                    <th>Rodzaj OZ</th>
+                    <th>Ilość zamówiona</th>
+                    <th>Ilość zrealizowana</th>
+                    <th>Komentarz</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in EmptyBoxOrderType.GetOrdersInProgress(cois.OrgUnit.Id))
+                {
+                    <tr>
+                        <td>@o.OrderUnit.Name</td>
+                        <td>@o.EmptyBox.Name</td>
+                        <td>@o.OrderAmount</td>
+                        <td>@o.CompletionAmount</td>
+                        <td>
+                            @foreach (var h in o.History)
+                            {
+                                <div style="font-size:smaller;">
+                                    <label>@h.Date</label>
+                                    <label>@h.Comment</label>
+                                    @if (h.User != null)
+                                    {
+                                        <label>@h.User.Login</label>
+                                    }
+                                    <label style="margin-left:5px;">@h.Status.ToString()</label>
+                                </div>
+                            }
+                        </td>
+                        <td><input type="button" class="btn btn-danger btn-sm" value="Odrzuć" @onclick="()=>selectObject(o,2)" /></td>
+                        <td><input type="button" class="btn btn-primary btn-sm" value="Zrealizowane" @onclick="()=>selectObject(o,3)" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+</div>
+<h6>Zamówienia zrealizowane</h6>
+<div class="section lsec">
+            <table class="table table-hover table-sm">
+            <thead class="bg-dark text-white sticky-top">
+                <tr>
+                    <th>Jednostka zamawiająca</th>
+                    <th>Rodzaj OZ</th>
+                    <th>Ilość zamówiona</th>
+                    <th>Ilość zrealizowana</th>
+                    <th>Komentarz</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in EmptyBoxOrderType.GetOrdersCompleted(cois.OrgUnit.Id))
+                {
+                    <tr>
+                        <td>@o.OrderUnit.Name</td>
+                        <td>@o.EmptyBox.Name</td>
+                        <td>@o.OrderAmount</td>
+                        <td>@o.CompletionAmount</td>
+                        <td>
+                            @foreach (var h in o.History)
+                            {
+                                <div style="font-size:smaller;">
+                                    <label>@h.Date</label>
+                                    <label>@h.Comment</label>
+                                    @if (h.User != null)
+                                    {
+                                        <label>@h.User.Login</label>
+                                    }
+                                    <label style="margin-left:5px;">@h.Status.ToString()</label>
+                                </div>
+                            }
+                        </td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+</div>
+
+
+@if (showGetToProgress)
+{
+        <div class="modal" tabindex="-1" style="display:block;">
+        <div class="modal-dialog" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Przyjęcie do realizacji</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showGetToProgress=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                    <div class="form-floating mb-3 mt-3">                    
+                        <textarea class="form-control" @bind="@comment"></textarea>      
+                        <label for="amount">Komentarz</label>
+                    </div>                
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showGetToProgress=false">Anuluj</button>
+                    <button type="button" class="btn btn-primary" @onclick="GetToProgress">Zapisz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@if (showCancel)
+{
+    <div class="modal" tabindex="-1" style="display:block;">
+        <div class="modal-dialog" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Odmowa realizacji</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showCancel=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+                    <div class="form-floating mb-3 mt-3">                    
+                        <textarea class="form-control" @bind="@comment" required></textarea>      
+                        <label for="amount">Komentarz</label>
+                    </div>       
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showCancel=false">Anuluj</button>
+                    <button type="button" class="btn btn-primary" @onclick="Cancel">Zapisz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@if (showCompleted)
+{
+        <div class="modal" tabindex="-1" style="display:block;">
+        <div class="modal-dialog" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Potwierdzenie realizacji</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showCompleted=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+                    <div>
+                        <div class="form-floating mb-3 mt-3">
+                            <input type="number" class="form-control" min="0" max="99999" @bind="@amount"></input>         
+                            <label for="amount">Ilość</label>
+                        </div>
+                    </div>
+                    <div>
+
+                        <div class="form-floating mb-3 mt-3">
+                            @if (amount != selectedObject.OrderAmount)
+                            {
+                                <textarea class="form-control" @bind="@comment"></textarea>
+                            }
+                            else
+                            {
+                                <textarea class="form-control" @bind="@comment" required></textarea>
+                            }
+                            <label for="amount">Komentarz</label>
+                        </div>
+
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showCompleted=false">Anuluj</button>
+                    <button type="button" class="btn btn-primary" @onclick="Complete">Zapisz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    List<EmptyBoxOrderType> orders;
+    EmptyBoxOrderType selectedObject;
+    bool showGetToProgress;
+    bool showCancel;
+    bool showCompleted;
+
+    string comment;
+    int amount;
+
+    protected override void OnInitialized()
+    {
+        EmptyBoxOrderType.OnNewOrder += OnNewOrder;
+
+        Refresh();
+    }
+
+    void OnNewOrder(object sender, EmptyBoxOrderType e)
+    {
+        if (e.ParentOrgUnit.Id == cois.OrgUnit.Id)
+            Refresh();
+    }
+
+    void Refresh()
+    {
+        orders = EmptyBoxOrderType.GetOrdersToProgress(cois.OrgUnit.Id);
+        if (orders == null)
+            orders = new List<EmptyBoxOrderType>();
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+
+    void selectObject(EmptyBoxOrderType o, int actionType)
+    {
+        selectedObject = o;
+        amount = selectedObject.OrderAmount;
+        if(actionType==1)
+            showGetToProgress=true;
+        if(actionType==2)
+            showCancel=true;
+        if(actionType==3)
+            showCompleted=true;
+
+    }
+
+    void GetToProgress()
+    {
+        selectedObject.GetToProgress(comment, cois.User, cois.Zone);
+        showGetToProgress = false;
+        Refresh();
+
+    }
+    void Complete()
+    {
+        selectedObject.SetCompleted(comment, cois.User, cois.Zone, amount);
+        showCompleted = false;
+        Refresh();
+    }
+    void Cancel()
+    {
+        selectedObject.Cancel(comment, cois.User, cois.Zone);
+        showCancel = false;
+        Refresh();
+    }
+}

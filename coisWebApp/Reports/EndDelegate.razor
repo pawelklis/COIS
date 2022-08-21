@@ -1,0 +1,50 @@
+﻿@inject ProgramInstance cois
+
+<div class="frame">
+<h6>Zakończenie delegowania</h6>
+
+    @foreach (var em in employees)
+    {
+        @if (em.ActiveDelegation() != null)
+        {
+            <div>
+                <label class="form-control">@em.FullName()</label>
+                <div style="display:flex;">
+                    <input class="form-control" type="datetime-local" @bind="@em.ActiveDelegation().StartTime">
+                    <input class="form-control" type="datetime-local" @bind="@em.ActiveDelegation().EndTime">
+                    <input class="form-control" type="text" placeholder="Dodatkowy opis" @bind="@em.ActiveDelegation().Description">
+                </div>
+            </div>
+        }
+    }
+    <input type="button" class="btn btn-primary" value="Zakończ" @onclick="()=>EndDelegation()">
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback AfterDelegate { get; set; }
+
+    [Parameter]
+    public List<EmployeeType> employees {get;set;}
+
+    public string Format { get; set; } = "yyyy-MM-ddTHH:mm";
+
+    protected override void OnInitialized()
+    {
+    }
+
+    void EndDelegation()
+    {
+        foreach (var em in employees)
+        {
+                DelegationType del = em.ActiveDelegation();
+                if (del != null)
+                    del.EndDelegation();
+        }
+
+        AfterDelegate.InvokeAsync();
+    }
+
+  
+
+}

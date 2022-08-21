@@ -1,0 +1,76 @@
+﻿@inject ProgramInstance cois
+<button type="button" class="btn btn-primary"  @onclick="()=>{AddRow();}">Dodaj wiersz</button>
+<table class="table table-hover table-sm" style="width:100%;">
+    <thead class="bg-dark text-white sticky-top">
+        <tr>
+            @foreach(var col in field.Columns)
+            {
+                <th title="@col.Description">@col.Name </th>
+            }
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var row in field.Rows)
+        {
+            <tr>
+                @foreach(var cel in row.Cells)
+                {
+                    <td>
+                        @if (cel.CellType== ReportModelItem.ReportFieldTypes.Bool)
+                        {
+                            <coisWebApp.ReportFields.ReportFieldBool cel=@cel></coisWebApp.ReportFields.ReportFieldBool>
+                        }
+                        @if (cel.CellType== ReportModelItem.ReportFieldTypes.List)
+                        {
+                            <coisWebApp.ReportFields.ReportFieldList cel=@cel></coisWebApp.ReportFields.ReportFieldList>
+                        }
+                        @if (cel.CellType== ReportModelItem.ReportFieldTypes.Number)
+                        {
+                            <coisWebApp.ReportFields.ReportFieldNumber cel=@cel></coisWebApp.ReportFields.ReportFieldNumber>
+                        }
+                        @if (cel.CellType== ReportModelItem.ReportFieldTypes.Text)
+                        {
+                            <coisWebApp.ReportFields.ReportFieldText cel=@cel></coisWebApp.ReportFields.ReportFieldText>
+                        }
+                        @if (cel.CellType== ReportModelItem.ReportFieldTypes.LongText)
+                        {
+                            <coisWebApp.ReportFields.ReportFieldText cel=@cel longtext=true></coisWebApp.ReportFields.ReportFieldText>
+                        }
+                        @if (cel.CellType== ReportModelItem.ReportFieldTypes.Table)
+                        {
+                            
+                        }
+                    </td>
+                }                
+                    <td>
+                       <button type="button" class="btn btn-danger"  @onclick="()=>{DeleteRow(row);}">Usuń</button>
+
+                    </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+
+    [Parameter]
+    public IReportField _field{ get; set; }
+    public ReportField_Table field{ get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (_field != null)
+            field = (ReportField_Table)_field;
+    }
+
+    void DeleteRow(ReportTableRow row)
+    {        
+        field.Rows.Remove(row);
+    }
+    void AddRow()
+    {
+        field.AddRow();
+    }
+
+}

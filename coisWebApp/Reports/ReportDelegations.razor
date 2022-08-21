@@ -1,0 +1,128 @@
+﻿@inject ProgramInstance cois
+
+<div class="frame">
+    <label class="form-control">
+        Pracownicy do oddelegowania
+    </label>
+    <select multiple class="form-control">
+        @if (cois.report != null)
+        {
+            @foreach (var e in cois.report.EnableToDelegateEmployees())
+            {
+                @if (employees.Find(x => x.Id == e.Id) == null)
+                {
+                    <option @onclick="()=>SelectUnselectEmployee(e)" id="@e.Id">@e.FullName()</option>
+                }
+                else
+                {
+                    <option class="bg-primary" @onclick="()=>SelectUnselectEmployee(e)" id="@e.Id">@e.FullName()</option>
+                }
+
+            }
+        }
+
+    </select>
+</div>
+
+
+
+
+@if (employees.Count > 0)
+{
+  <StartDelegate employees=@employees AfterDelegate="()=>{employees.Clear();this.InvokeAsync(()=>this.StateHasChanged());}"></StartDelegate>  
+}
+@if(cois.report!=null)
+{
+    <table class="table table-hover table-sm">
+        <thead class="bg-dark text-white sticky-top">
+            <tr>
+                <th>Pracownik</th>
+                <th>Ze strefy</th>
+                <th>Do strefy</th>
+                <th>Czas rozpoczęcia</th>
+                <th>Czas zakończenia</th>
+                <th>Dodatkowy opis</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var del in cois.report.Delegations())
+            {
+                <tr>
+                    <td>@del.Employee.FullName()</td>
+                    <td>@del.FromZone.Name</td>
+                    <td>@del.ToZone.Name</td>
+                    <td>
+                        <input class="form-control small" style="font-size:small;" title="Czas rozpoczecia" type="datetime-local" @bind="@del.StartTime" >
+                    </td>
+                    <td>
+                        <input class="form-control small" style="font-size:small;" title="Czas zakończenia" type="datetime-local" @bind="@del.EndTime" >
+                    </td>
+                    <td><input type="text" @bind="del.Description" /></td>
+                    <td><input type="button" class="btn btn-primary" @onclick="del.Save" value="Zapisz"></td>
+                    @if (del.Closed == false)
+                    {
+                        <td>
+                            <input type="button" class="btn btn-warning" @onclick="del.EndDelegation" value="Zakończ">
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+
+
+@code {
+    public void GetDelegations()
+    {
+
+
+    }
+
+    List<EmployeeType> employees;
+
+    protected override void OnInitialized()
+    {
+        employees = new List<EmployeeType>();
+        cois.report.OnSaved += OnReportSaved;
+        cois.report.OnNewDelegationStart += OnReportDelegateStart;
+        cois.report.OnNewDelegationEnd += OnReportDelegateEnd;
+    }
+
+    void OnReportSaved(object sender,EventArgs e)
+    {
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+    void OnReportDelegateStart(object? sender, DelegationType e)
+    {
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+    void OnReportDelegateEnd(object? sender, DelegationType e)
+    {
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+    void SelectUnselectEmployee(EmployeeType e)
+    {
+        if (employees.Find(x => x.Id == e.Id) == null)
+        {
+            employees.Add(e);
+        }
+        else
+        {
+             employees.Remove(e);
+        }
+    }
+
+    void ChangeStartTime(ChangeEventArgs e)
+    {
+        //startDate=DateTime.Parse(e.Value.ToString());
+    }    
+    void ChangeEndTime(ChangeEventArgs e)
+    {
+        //endDate=DateTime.Parse(e.Value.ToString());
+    }
+}

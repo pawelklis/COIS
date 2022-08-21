@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="Registers\CrewModelShedule.razor" />
+    <Content Remove="wwwroot\Reports\Report1.rdlc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\COIS\COIS.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
+    <Folder Include="wwwroot\Download\" />
+    <Folder Include="wwwroot\pdfDocs\" />
+    <Folder Include="wwwroot\upload\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Append.Blazor.Printing" Version="1.1.0" />
+    <PackageReference Include="AspNetCore.Reporting" Version="2.1.0" />
+    <PackageReference Include="Microsoft.ReportingServices.ReportViewerControl.WebForms" Version="150.1484.0" />
+    <PackageReference Include="ZXing.Net.Bindings.CoreCompat.System.Drawing" Version="0.16.5-beta" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\css\icons\bcrscan.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Registers\CrewModelShedule.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Registers\CrewModelShedule.razor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="wwwroot\Reports\Report1.rdlc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Registers\CrewModelShedule.razor" />
+  </ItemGroup>
+
+</Project>

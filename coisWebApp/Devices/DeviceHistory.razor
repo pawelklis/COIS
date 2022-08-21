@@ -1,0 +1,145 @@
+﻿@page "/devicehistory"
+@inject ProgramInstance cois 
+
+
+<div class="input-group" style="width:500px;">
+    <select class="form-control" value="@YearSelected" @onchange="ChangeYear">
+        @foreach (var t in years)
+        {
+            <option value="@t">@t</option>
+        }
+    </select>
+
+
+    <select class="form-control" value="@MonthSelected" @onchange="ChangeMonth">
+        @foreach (var t in months)
+        {
+            <option value="@t">@t</option>
+        }
+    </select>
+
+    <select class="form-control" value="@deviceclass" @onchange="devclassChange">
+        <option value="@DeviceEvidence.deviceclass.Bateria">Bateria</option>
+        <option value="@DeviceEvidence.deviceclass.Elektrowózek">Wózek widłowy</option>
+        <option value="@DeviceEvidence.deviceclass.Rekwizyt">Rekwizyt</option>
+        <option value="@DeviceEvidence.deviceclass.Skaner">Skaner</option>
+    </select>
+
+
+    <SelectZoneCpt ParentId="session.LogedZone.OrganizationUnit.Id" ValueChanged="ZoneChange" firstSelected="true"></SelectZoneCpt>
+
+    <input type="button" class="btn btn-primary" value="Pokaż dane" @onclick="Bind" />
+</div>
+
+
+
+
+<table class="table table-hover table-sm">
+    <thead class="bg-dark text-white sticky-top">
+        <tr>
+            <th>Numer</th>
+            <th>Nazwa</th>
+            <th>Zdano</th>
+            <th>Pracownik pobierający</th>
+            <th>Strefa pobrania</th>
+            <th>Czas pobrania</th>
+            <th>Użytkownik wydający</th>
+            <th>Pracownik zdający</th>
+            <th>Strefa zdania</th>
+            <th>Czas zdania</th>
+            <th>Użytkownik zdający</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach(var d in dv)
+            {
+                <tr>
+                    <td>@d.Device()?.BarCode</td>
+                    <td>@d.Device()?.Name</td>
+                    <td>@d.Closed</td>
+                    <td>@d.GetEmployee?.FullName()</td>
+                    <td>@d.GetZone?.Name</td>
+                    <td>@d.GetTime</td>
+                    <td>@d.GetManagerEmployee?.FullName()</td>
+                    <td>@d.PassEmployee?.FullName()</td>
+                    <td>@d.PassZone?.Name</td>
+                    <td>@d.PassTime</td>
+                    <td>@d.PassManagerEmployee?.FullName()</td>
+
+                </tr>
+            }
+    </tbody>
+
+
+</table>
+
+
+@code {
+
+
+    DeviceEvidence.deviceclass deviceclass { get; set; }
+
+    List<int> years { get; set; }
+    int YearSelected { get; set; } = DateTime.Now.Year;
+
+    protected override void OnInitialized()
+    {
+        dv = new List<DeviceEvidence>();
+
+        SelectedZone = cois.Zone;
+
+        years = new List<int>();
+        int yn = DateTime.Now.Year;
+        int pn = yn - 3;
+
+        for (int i = 0; i < 4; i++)
+        {
+            years.Add(pn);
+            pn++;
+        }
+
+
+        months = new List<int>();
+        for (int i = 0; i < 12; i++)
+        {
+            months.Add(i + 1);
+        }
+
+    }
+    void ChangeYear(ChangeEventArgs e)
+    {
+        YearSelected = int.Parse(e.Value.ToString());
+    }
+
+    void ZoneChange(int zoneid)
+    {
+        SelectedZone = ZoneType.GetZoneById(zoneid);
+    }
+
+    void devclassChange(ChangeEventArgs e)
+    {
+        //int i = int.Parse(e.Value.ToString());
+        if (e.Value.GetType() == typeof(string))
+            deviceclass = (DeviceEvidence.deviceclass)Enum.Parse(typeof(DeviceEvidence.deviceclass), e.Value.ToString(),true);
+        else
+            deviceclass = (DeviceEvidence.deviceclass)e.Value;
+    }
+
+    ZoneType SelectedZone { get; set; }
+
+    List<int> months { get; set; }
+    int MonthSelected { get; set; } = DateTime.Now.Month;
+    void ChangeMonth(ChangeEventArgs e)
+    {
+        MonthSelected = int.Parse(e.Value.ToString());
+    }
+
+    List<DeviceEvidence> dv { get; set; }
+
+
+    void Bind()
+    {
+        dv = DeviceOperation.GetHistory(YearSelected, MonthSelected, SelectedZone.Id,  deviceclass);
+    }
+
+}

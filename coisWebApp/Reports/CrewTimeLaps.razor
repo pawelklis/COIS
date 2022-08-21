@@ -1,0 +1,15 @@
+﻿
+<div>
+    @foreach (var t in crew.TimeLaps())
+    {
+        <div>
+            <label>@t.Item1</label>
+            <label>@t.Item2</label>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public CrewItem crew { get; set; }
+}

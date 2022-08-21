@@ -1,0 +1,164 @@
+﻿@page "/deviceconditions"
+@inject ProgramInstance cois
+
+
+<h3>Typy urządzeń</h3>
+<input type="button" class="btn btn-success" value="Dodaj" @onclick="Add" data-bs-toggle="modal" data-bs-target="#myModal" />
+
+
+
+@if (objects != null || objects?.Count > 0)
+{
+    <table class="table table-hover table-sm">
+                <thead class="bg-dark text-white sticky-top">
+           <tr class="">
+            <th>Nazwa</th>
+            <th>Opis</th>
+            <th>Można pobierać</th>
+            <th>Domyślna</th>
+            <th></th>
+        </tr>     
+        </thead>
+        <tbody>
+        @foreach (var e in objects)
+        {
+            <tr>
+                <td>@e.Name</td>
+                <td>@e.Description</td>
+                <td><input type="checkbox" class="checkbox" readonly onclick="return false;" @bind=e.CanBeUse></td>
+                <td><input type="checkbox" class="checkbox" readonly onclick="return false;" @bind="e.Default"></td>
+                <td><input type="button" value="Edytuj" class="btn btn-primary" @onclick="()=>EditObject(e)" data-bs-toggle="modal" data-bs-target="#myModal" /></td>
+            </tr>
+        }
+        </tbody>
+
+
+
+
+    </table>
+}
+else
+{
+    <SurveyPrompt Title="Brak elementów"></SurveyPrompt>
+}
+
+<!-- The Modal -->
+<div class="modal fade" id="myModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">@selected?.Name</h4>
+                <button type="button" class="btn close oi oi-circle-x" data-bs-dismiss="modal"></button>
+            </div>
+            @if (selected != null)
+            {
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <div class="form-floating mb-3 mt-3">
+                        <input type="text" class="form-control" id="Nazwa" placeholder="Nazwa" name="Nazwa" @bind="selected.Name">
+                        <label for="Nazwa">Nazwa</label>
+                    </div>
+
+                    <div class="form-floating mb-3 mt-3">
+                        <input type="text" class="form-control" id="Nazwa" placeholder="Nazwa" name="Nazwa" @bind="selected.Description">
+                        <label for="Nazwa">Opis</label>
+                    </div>
+                    <div class="form-floating mb-3 mt-3">
+                        <input type="checkbox" class="" id="Nazwa" placeholder="Nazwa" name="Nazwa" @bind="selected.CanBeUse">
+                        <label for="Nazwa">Można pobierać</label>
+                    </div>
+                     <div class="frame mb-3 mt-3" style="border-radius:2px;">
+                        @if (selected.Default)
+                        {
+                            <input type="checkbox" class="checkbox" id="Nazwa" placeholder="Nazwa" name="Nazwa" checked readonly>
+                        }
+                        else
+                        {
+                           <input type="checkbox" class="checkbox" id="Nazwa" placeholder="Nazwa" name="Nazwa" value="@selected.Default" @onchange="changeDefault">                         
+                        }
+                        <label for="Nazwa">Domyślna kondycja</label>
+                    </div>
+                </div>
+            }
+            <!-- Modal footer -->
+            <div class="modal-footer" style="transition:all 2s;">
+                @if (ShowConfirm)
+                {
+                    <button type="button" class="btn btn-success" @onclick="()=>ShowConfirm=false">Anuluj</button>
+                    <button type="button" class="btn btn-danger" @onclick="RemoveEmpl" data-bs-dismiss="modal">Potwierdzam usunięcie</button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" @onclick="()=>ShowConfirm=true">Usuń</button>
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal" @onclick="Save">Zapisz</button>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@code {
+    protected override void OnInitialized()
+    {
+        GetObjects();
+    }
+    void changeDefault(ChangeEventArgs e)
+    {
+        bool i = bool.Parse(e.Value.ToString());
+        if (i)
+            selected.SetAsDefault();
+    }
+
+
+    int selZoneId { get; set; }
+
+    void selZone(int id)
+    {
+        selZoneId = id;
+        GetObjects();
+    }
+
+    List<DeviceCondition> objects { get; set; }
+
+    DeviceCondition selected { get; set; }
+
+
+    bool ShowConfirm { get; set; }
+
+
+
+    void Add()
+    {
+        selected = new DeviceCondition();
+    }
+    void RemoveEmpl()
+    {
+        selected.Delete();
+        GetObjects();
+        ShowConfirm = false;
+    }
+
+
+
+    void Save()
+    {
+        selected.Save();
+        selected = null;
+        GetObjects();
+    }
+
+    void GetObjects()
+    {
+        objects = DeviceCondition.GetDeviceConditions();
+    }
+
+    void EditObject(DeviceCondition em)
+    {
+        selected = em;
+    }
+
+}

@@ -1,0 +1,183 @@
+﻿@page "/employeeeditor"
+@inject ProgramInstance cois
+<h3>Pracownicy</h3>
+<div class="input-group w-50">
+    <label class="form-control" width="100"> Filtr strefy</label>
+    <select class="form-control" value="@filterId" @onchange="ChangeFilter">
+        @foreach (var z in ZoneType.GetZoneByOrgUnitId(cois.OrgUnit.Id))
+        {
+            <option value="@z.Id">
+                @z.Name
+            </option>
+        }
+    </select>
+
+    <input type="button" class="btn btn-success form-control" @onclick="Add" value="Dodaj" />
+
+        <ReportDownloader reportname=@ReportName.EmployeesStandard></ReportDownloader>
+        <ReportViewer  reportname=@ReportName.EmployeesStandard></ReportViewer>
+
+</div>
+
+@if (objects.Count > 0)
+{
+  <table class="table table-hover table-sm">
+    <thead class="bg-dark text-white sticky-top">
+        <tr>
+            @foreach (var p in objects.First().GetType().GetProperties())
+            {
+                @if (p.CustomAttributes.Where(x=>x.AttributeType.Name=="FrontEndAttribute").Count() > 0)
+                {
+                    FrontEndAttribute fa = (FrontEndAttribute)p.GetCustomAttributes(typeof(FrontEndAttribute), true).First();
+                    @if (fa != null)
+                    {
+                        @if (fa.Show)
+                        {
+                            <th> @fa.Name </th>
+                        }
+                    }
+                }
+            }
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+            @foreach (var o in objects)
+            {
+                <tr>
+                    @foreach (var p in objects.First().GetType().GetProperties())
+                    {
+                        @if (p.CustomAttributes.Where(x=>x.AttributeType.Name=="FrontEndAttribute").Count() > 0)
+                        {
+                            FrontEndAttribute fa = (FrontEndAttribute)p.GetCustomAttributes(typeof(FrontEndAttribute), true).First();
+                            @if (fa != null)
+                            {
+                                @if (fa.Show)
+                                {
+                                    <td> @p.GetValue(o) </td>
+                                }
+                            }
+                        }
+                    }
+                    <td><input type="button" @onclick="()=>Select(o)" class="btn btn-secondary" value="Edytuj"></td>
+                    <td><input type="button" @onclick="()=>{selectedObject=o;confirmDelete=true;}"class="btn btn-danger" value="Usuń"></td>
+                </tr>
+
+            }
+    </tbody>
+</table>  
+}
+
+
+@if (showModal)
+{
+    <div class="modal" style="display:block;" tabindex="-1">
+    <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@selectedObject.FullName()</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>showModal=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                    <label>Imię</label>
+                    <input class="form-control" type="text" @bind="selectedObject.FirstName">
+
+                    <label>Nazwisko</label>
+                    <input class="form-control" type="text" @bind="selectedObject.LastName">
+
+                    <label>Kod</label>
+                    <input class="form-control" type="text" @bind="selectedObject.EmployeeCode">
+       
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>showModal=false">Zamknij</button>
+                    <button type="button" class="btn btn-primary" @onclick="Save">Zapisz</button>
+                </div>  
+        </div>
+        </div>
+    </div>
+}
+
+@if (confirmDelete)
+{
+    <div class="modal" tabindex="-1" style="display:block;opacity:inherit;">
+        <div class="modal-dialog" style="display:block;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Usuwanie obiektu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="()=>confirmDelete=false"></button>
+                </div>
+                <div class="modal-body" style="max-height:70vh;overflow:auto;">
+
+                    <label>Czy potwierdzasz trwałe usunięcie obiektu?</label>
+       
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="()=>confirmDelete=false">Anuluj</button>
+                    <button type="button" class="btn btn-danger" @onclick="Delete">Usuń</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    bool showModal;
+    bool confirmDelete;
+    List<EmployeeType> objects;
+    EmployeeType selectedObject;
+    int filterId;
+    void ChangeFilter(ChangeEventArgs e)
+    {
+        int id=int.Parse(e.Value.ToString());
+        filterId = id;
+        Refresh();
+    }
+
+
+    protected override void OnInitialized()
+    {
+        filterId = cois.OrgUnit.Id;
+        Refresh();   
+        base.OnInitialized();
+    }
+
+
+
+    void Refresh()
+    {
+        objects = EmployeeType.GetEmployees(filterId);
+        this.InvokeAsync(() => this.StateHasChanged());
+    }
+
+    void Add()
+    {
+        selectedObject = new EmployeeType(){Zone=ZoneType.GetZoneById(filterId)};
+        showModal = true;
+    }
+
+    void Save()
+    {
+        selectedObject.Save();
+        showModal = false;
+        Refresh();
+    }
+
+    void Select(EmployeeType o)
+    {
+        selectedObject = o;
+        showModal = true;
+    }
+
+    void Delete()
+    {
+        selectedObject.Delete();
+        Refresh();
+        confirmDelete = false;
+    }
+
+
+
+}

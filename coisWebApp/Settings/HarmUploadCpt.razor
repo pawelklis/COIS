@@ -1,0 +1,64 @@
+﻿@page "/importharm"
+@inject IWebHostEnvironment env
+@inject ProgramInstance cois
+@using System.Timers 
+
+@if (imported)
+{
+<div class="container">
+    <SurveyPrompt Title="Zaimportowano pomyślnie pliki!"></SurveyPrompt>
+    <button value="Ok" @onclick="() => imported = false" class="btn btn-outline-success">OK</button>
+</div>
+
+}
+else
+{
+    <FileUpload @ref="fileUpload" ShowHide="false" OnSubmitFiles="ImportFiles"></FileUpload>
+}
+
+
+
+
+
+@code {
+    Timer tm { get; set; }
+    bool imported { get; set; }
+
+    FileUpload fileUpload;
+
+    async void ImportFiles(List<string> browserFiles)
+    {
+        if (browserFiles != null)
+        {
+            foreach (var f in browserFiles) //System.IO.Directory.GetFiles($"{env.WebRootPath}\\upload\\"))
+            {
+                try
+                {
+                    await Task.Run(() =>
+                    {
+                        cois.Logger.StartWork();
+                        FileHelper.Import_CSIP_CrewFile(f, cois.Zone, cois.Logger);
+                        imported = true;
+                        fileUpload.ShowHide = true;
+
+                        cois.Logger.EndWork();
+                        InvokeAsync(() => { StateHasChanged(); });
+                    });
+
+                }
+                catch (Exception)
+                {
+
+                }
+            }
+        }
+    }
+
+
+    protected async override Task OnParametersSetAsync()
+    {
+        await InvokeAsync(() => { StateHasChanged(); });
+    }
+
+
+}

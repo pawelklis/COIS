@@ -1,0 +1,27 @@
+﻿@page "/newreport"
+@inject ProgramInstance cois
+
+<h3>Dostępne raporty</h3>
+<div class="row centerOnscreen">
+    @foreach (var r in modelReports)
+    {
+        <ReportCard model="r"></ReportCard>
+    }
+</div>
+
+    @code {
+
+        protected override void OnInitialized()
+        {
+            GetReportModels();
+        }
+
+
+        List<ReportModel> modelReports { get; set; }
+
+        void GetReportModels()
+        {
+            modelReports = ReportModel.GetReportModels(cois.Zone.OrganizationUnit().Id, cois.Zone.Id);
+        }
+
+    }

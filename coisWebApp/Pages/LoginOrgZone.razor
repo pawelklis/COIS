@@ -1,0 +1,91 @@
+﻿@page "/setorgzone"
+@inject ProgramInstance cois
+@inject NavigationManager NavManager
+@layout EmptyLayout
+
+
+<style>
+.centerOnscreen{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50% , -50%);
+}
+</style>
+
+<div class="centerOnscreen">
+    <div class="card text-center" style="width: 18rem;">
+        <div class="card-body">
+
+            <h5 class="card-title">Zaloguj się do</h5>
+            <select class="form-control" value="@OrgId" @onchange="ChangeVal">
+                @foreach (var z in cois.User.GetEnabledOrgUnits())
+                {
+                    <option value="@z.Id">@z.Name</option>
+                }
+            </select>
+
+            @if (ListItemsZone != null)
+            {
+                <select class="form-control" value="@ZoneID" @onchange="ChangeZone">
+                    @if (ListItemsZone != null)
+                    {
+                        @foreach (var z in ListItemsZone)
+                        {
+                            <option value="@z.Id">@z.Name</option>
+                        }
+                    }
+                </select>
+            }
+            else
+            {
+                <div style="height:38px;"></div>
+            }
+            <div style="height:38px;"></div>
+            @if(OrgId!=0 && ZoneID != 0)
+            {
+                <input type="button" class="btn btn-primary" @onclick="SetOrgZone" value="Wybierz" />
+            }
+            else
+            {
+                <div style="height:38px;"></div>
+            }
+        </div>
+    </div>
+</div>
+
+
+
+
+@code {
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+
+    int OrgId;
+    int ZoneID;
+
+    List<ZoneType> ListItemsZone;
+
+    void ChangeVal(ChangeEventArgs e)
+    {
+        OrgId = Convert.ToInt32(e.Value.ToString());
+        ValueChanged.InvokeAsync(OrgId);
+
+        ListItemsZone = cois.User.Zones.Where(x => x.OrganizationUnit().Id == OrgId).ToList();
+        ZoneID = ListItemsZone.FirstOrDefault().Id;
+    }
+
+    void ChangeZone(ChangeEventArgs e)
+    {
+        ZoneID = Convert.ToInt32(e.Value.ToString());
+        ValueChanged.InvokeAsync(ZoneID);
+    }
+
+    void SetOrgZone()
+    {
+        cois.SetOrgUnit(OrgUnit.GetOrgUnitById(OrgId));
+        cois.SetZoneType(ZoneType.GetZoneById(ZoneID));
+        NavManager.NavigateTo("index");
+
+    }
+
+}

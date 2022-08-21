@@ -1,0 +1,72 @@
+﻿@inject IJSRuntime JS
+@inject NavigationManager navManager
+@inject IWebHostEnvironment WebHostEnvironment
+
+
+<div class="dropdown"  style="margin-left:5px;">
+  <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+    Pobierz
+  </a>
+
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+    <li><a class="dropdown-item small" @onclick="()=>Download(1)">PDF</a></li>
+    <li><a class="dropdown-item small" @onclick="()=>Download(2)">XLS</a></li>
+  </ul>
+</div>
+
+
+@code{
+    [Parameter]
+    public ReportName reportname{ get; set; }
+
+    void Download(int format)
+    {
+        ReportGenerator reportGenerator = new ReportGenerator(WebHostEnvironment);
+        string filePAth = reportGenerator.GetReport(format,reportname);
+
+        switch (format)
+        {
+            case 1:
+                pdf(filePAth);
+                break;
+            case 2:
+                xls(filePAth);
+                break;
+            default:
+                break;
+        }
+    }
+
+    async void pdf(string FilePath)
+    {
+        await DownloadFileFromURL(FilePath);
+    }
+
+    async void xls(string FilePath)
+    {
+        await DownloadFileFromURL(FilePath);
+    }
+
+    private async Task Kill(string filePath)
+    {
+        try
+        {
+            await Task.Delay(10000);
+            System.IO.File.Delete(filePath);
+        }
+        catch (Exception)
+        {
+
+        }
+    }
+
+    private async Task DownloadFileFromURL(string filePath)
+    {
+        var fileName = System.IO.Path.GetFileName(filePath);
+        var fileURL = $"../Download/" + fileName;
+        await JS.InvokeVoidAsync("triggerFileDownload", fileName, fileURL);
+
+        //JS.InvokeVoidAsync("open", fileURL, "_blank");
+        await Kill(filePath);
+    }
+}
